@@ -144,7 +144,8 @@ map_obj.name = "Test"
 map_obj.create_wms_map()
 map_obj.show_map()
 
-add_vertical_space(5)
+st.markdown("---")
+#add_vertical_space(5)
 if st.button("Gå tilbake til forside"):
     switch_page("Hjem")
 

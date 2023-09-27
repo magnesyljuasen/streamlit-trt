@@ -37,7 +37,8 @@ contact_person = st.text_input(f"Kontaktperson")
 if len(contact_person) > 0:
     st.success("Registrert", icon = "✅")
 
-add_vertical_space(5)
+#add_vertical_space(5)
+st.markdown("---")
 c1, c2 = st.columns(2)
 with c1:
     if st.button("Forrige"):

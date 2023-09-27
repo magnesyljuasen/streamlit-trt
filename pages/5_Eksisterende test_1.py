@@ -15,6 +15,10 @@ with open("src/styles/main.css") as f:
     st.markdown("""<style>div[data-testid="stSidebarNav"] {display: none;}</style>""", unsafe_allow_html=True) # litt av sidebar
     st.markdown('''<style>button[title="View fullscreen"]{visibility: hidden;}</style>''', unsafe_allow_html=True) # hide fullscreen
     
-add_vertical_space(5)
+st.info("Hent prosjekter fra database")
+project_name = selectbox("Prosjekt", ["Prosjekt 1", "Prosjekt 2", "Prosjekt 3"], no_selection_label="Velg")
+    
+#add_vertical_space(5)
+st.markdown("---")
 if st.button("Gå tilbake til forside"):
     switch_page("Hjem")
