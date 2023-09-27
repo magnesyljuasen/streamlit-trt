@@ -41,7 +41,7 @@ st.markdown("---")
 st.info("Rapporter problem (her kommer det et skjema)")
 
 
-add_vertical_space(10)
+add_vertical_space(5)
 if st.button("Gå tilbake til forside"):
     switch_page("Hjem")
 

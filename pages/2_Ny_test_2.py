@@ -59,7 +59,7 @@ with st.expander("Temperaturprofil etter"):
 
 comment = st.text_area("Eventuelle kommentarer")
 
-add_vertical_space(10)
+add_vertical_space(5)
 c1, c2 = st.columns(2)
 with c1:
     if st.button("Forrige"):

@@ -15,6 +15,6 @@ with open("src/styles/main.css") as f:
     st.markdown("""<style>div[data-testid="stSidebarNav"] {display: none;}</style>""", unsafe_allow_html=True) # litt av sidebar
     st.markdown('''<style>button[title="View fullscreen"]{visibility: hidden;}</style>''', unsafe_allow_html=True) # hide fullscreen
     
-add_vertical_space(10)
+add_vertical_space(5)
 if st.button("Gå tilbake til forside"):
     switch_page("Hjem")
