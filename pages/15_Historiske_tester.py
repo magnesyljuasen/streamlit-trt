@@ -20,6 +20,7 @@ with open("src/styles/main.css") as f:
     st.markdown("""<style>[data-testid="collapsedControl"] {display: none}</style>""", unsafe_allow_html=True) # ingen sidebar
     st.markdown("""<style>div[data-testid="stSidebarNav"] {display: none;}</style>""", unsafe_allow_html=True) # litt av sidebar
     st.markdown('''<style>button[title="View fullscreen"]{visibility: hidden;}</style>''', unsafe_allow_html=True) # hide fullscreen
+    st.markdown("""<style>.block-container {padding-top: 1rem;padding-bottom: 0rem;padding-left: 5rem;padding-right: 5rem;}</style>""", unsafe_allow_html=True)
     
 class Map:
     def __init__(self):
@@ -108,7 +109,7 @@ class Map:
         self.m = m
     
     def show_map(self):
-        self.m.to_streamlit(700, 600)
+        self.m.to_streamlit(570, 600)
         
     def _add_wms_layer(self, map, url, layer, layer_name, display):
         map.add_wms_layer(

@@ -14,7 +14,11 @@ with open("src/styles/main.css") as f:
     st.markdown("""<style>[data-testid="collapsedControl"] {display: none}</style>""", unsafe_allow_html=True) # ingen sidebar
     st.markdown("""<style>div[data-testid="stSidebarNav"] {display: none;}</style>""", unsafe_allow_html=True) # litt av sidebar
     st.markdown('''<style>button[title="View fullscreen"]{visibility: hidden;}</style>''', unsafe_allow_html=True) # hide fullscreen
-    
+    st.markdown("""<style>.block-container {padding-top: 1rem;padding-bottom: 0rem;padding-left: 5rem;padding-right: 5rem;}</style>""", unsafe_allow_html=True)
+
+#st session state
+if 'project_name' not in st.session_state:
+    st.session_state.project_name = 0
 
 def well_placement_input(text_string):
     if text_string == "Skriv inn adresse":
@@ -26,7 +30,11 @@ def well_placement_input(text_string):
         with c2:
             long = st.number_input("ØV", value = 10)
 
+
 project_name = st.text_input("Navn på prosjektet")
+if len(project_name) > 0:
+    st.session_state.project_name = project_name
+
 if project_name == "Bygdehaven":
     st.warning("Mente du det allerede eksisterende prosjektet Bygdehaven?")
     if st.button("Gå til eksisterende prosjekt"):
