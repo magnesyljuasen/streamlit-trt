@@ -15,8 +15,16 @@ with open("src/styles/main.css") as f:
     st.markdown("""<style>[data-testid="collapsedControl"] {display: none}</style>""", unsafe_allow_html=True) # ingen sidebar
     st.markdown("""<style>div[data-testid="stSidebarNav"] {display: none;}</style>""", unsafe_allow_html=True) # litt av sidebar
     st.markdown('''<style>button[title="View fullscreen"]{visibility: hidden;}</style>''', unsafe_allow_html=True) # hide fullscreen
-    # Remove whitespace from the top of the page and sidebar
-    st.markdown("""<style>.css-18e3th9 {padding-top: 0rem;padding-bottom: 10rem;padding-left: 5rem;padding-right: 5rem;}.css-1d391kg {padding-top: 3.5rem;padding-right: 1rem;padding-bottom: 3.5rem;padding-left: 1rem;}</style>""", unsafe_allow_html=True)
+    st.markdown("""
+        <style>
+               .block-container {
+                    padding-top: 1rem;
+                    padding-bottom: 0rem;
+                    padding-left: 5rem;
+                    padding-right: 5rem;
+                }
+        </style>
+        """, unsafe_allow_html=True)
 
 with open('src/login/config.yaml') as file:
     config = yaml.load(file, Loader=stauth.SafeLoader)
