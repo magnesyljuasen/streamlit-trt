@@ -20,10 +20,6 @@ a:hover {
 
 ul {list-style-type: circle;}
 
-hr {
-    margin-top: 0px;
-    margin-bottom: 5%;
-}
 
 div.stButton > button:first-child {
     color: white;
