@@ -34,6 +34,6 @@ def switch_pages(previous_page_destination, previous_page_text, next_page_destin
         if st.button(next_page_destination):
             switch_page(next_page_text)
 
-def toggle_closed_expander(state):
+def toggle_closed_expander(state, check_state):
     st.session_state[state] = False
-    st.session_state.check = True
+    st.session_state[check_state] = True

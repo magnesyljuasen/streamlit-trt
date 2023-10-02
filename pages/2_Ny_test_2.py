@@ -17,6 +17,6 @@ if st.button("Lagre utkast"):
     st.success("Takk! Utkastet er lagret", icon = "✅")
 
 if st.button("Send inn ferdig utfylt skjema"):
-    st.success("Takk! ditt skjema er innsendt", icon = "✅")
+    st.success("Takk! Ditt skjema er innsendt", icon = "✅")
 
 switch_pages(previous_page_destination="Ny_test_1", previous_page_text="Forrige", next_page_destination="Gå tilbake til forside", next_page_text = "Hjem")
