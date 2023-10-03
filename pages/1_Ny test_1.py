@@ -110,6 +110,28 @@ with st.expander(f"{technical_info_check} Brønn og kollektor", expanded=st.sess
         st.button("Registrer", on_click=toggle_closed_expander("technical_info_expanded", "technical_info_check"), key = "technical")
 #----------------------
 
+#st session state
+if 'power_before' not in st.session_state:
+    st.session_state.power_before = 0
+#----------------------
+if "power_before_expanded" not in st.session_state:
+    st.session_state.power_before_expanded = False
+if "power_before_check" not in st.session_state:
+    st.session_state.power_before_check = False
+if st.session_state.power_before_check == True:
+    power_before_check = "✅"
+else:
+    power_before_check = "✗"
+
+with st.expander(f"{power_before_check} Strømmåler før", expanded=st.session_state.power_before_expanded):
+    power_before = st.number_input("Strømmåler før", value = st.session_state.power_before)
+    if power_before > 0:
+        st.session_state.power_before = power_before
+    if power_before > 0:
+        st.button("Registrer", on_click=toggle_closed_expander("power_before_expanded", "power_before_check"), key = "power_before_button") 
+    
+#----------------------
+
 #----------------------
 if "temperature_before_expanded" not in st.session_state:
     st.session_state.temperature_before_expanded = False
@@ -190,6 +212,29 @@ with st.expander(f"{temperature_after_check} Temperaturprofil etter", expanded=s
         st.button("Registrer", on_click=toggle_closed_expander("temperature_after_expanded", "temperature_after_check"), key = "temperature_after")
 #----------------------
 
+#----------------------
+
+#st session state
+if 'power_after' not in st.session_state:
+    st.session_state.power_before = 0
+#----------------------
+if "power_after_expanded" not in st.session_state:
+    st.session_state.power_after_expanded = False
+if "power_after_check" not in st.session_state:
+    st.session_state.power_after_check = False
+if st.session_state.power_after_check == True:
+    power_after_check = "✅"
+else:
+    power_after_check = "✗"
+
+with st.expander(f"{power_after_check} Strømmåler etter", expanded=st.session_state.power_before_expanded):
+    power_after = st.number_input("Strømmåler etter", value = st.session_state.power_before)
+    if power_after > 0:
+        st.session_state.power_after = power_after
+    if power_after > 0:
+        st.button("Registrer", on_click=toggle_closed_expander("power_after_expanded", "power_after_check"), key = "power_after_button") 
+    
+#----------------------
 #----------------------
 comment = st.text_area("Eventuelle kommentarer")
 uploaded_files = st.file_uploader("Last opp eventuelle vedlegg (bilder, testdata, andre filer)", accept_multiple_files=True)
