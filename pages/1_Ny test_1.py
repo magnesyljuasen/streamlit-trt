@@ -6,6 +6,7 @@ import numpy as np
 import base64
 import plotly.express as px
 from PIL import Image
+import pymongo
 from streamlit_extras.switch_page_button import switch_page
 from streamlit_extras.no_default_selectbox import selectbox
 from streamlit_extras.add_vertical_space import add_vertical_space
@@ -14,7 +15,7 @@ from src.scripts import streamlit_settings, switch_pages, toggle_closed_expander
 def well_placement_input(text_string):
     if text_string == "Skriv inn adresse":
         st.info("def adressefunksjon()")
-    elif text_string == "Skriv inn koordinater":
+    elif text_string == "Plasser i kart":
         c1, c2 = st.columns(2)
         with c1:
             lat = st.number_input("NS", value = 63)
@@ -32,13 +33,15 @@ streamlit_settings()
 
 #st session state
 if 'project_name' not in st.session_state:
-    st.session_state.project_name = None
+    st.session_state.project_name = ""
+if 'contact_person' not in st.session_state:
+    st.session_state.contact_person = ""
 if 'lat' not in st.session_state:
     st.session_state.lat = None
 if 'long' not in st.session_state:
     st.session_state.long = None
 
-
+#----------------------
 if "project_info_expanded" not in st.session_state:
     st.session_state.project_info_expanded = True
 if "project_info_check" not in st.session_state:
@@ -49,17 +52,31 @@ else:
     project_info_check = "✗"
     
 with st.expander(f"{project_info_check} Informasjon om prosjektet", expanded=st.session_state.project_info_expanded):
-    project_name = st.text_input("Navn på prosjektet")
+    project_name = st.text_input("Navn på prosjektet", value = st.session_state.project_name)
     if len(project_name) > 0:
         st.session_state.project_name = project_name
         
-    well_placement_input(selectbox("Plassering av brønn", ["Skriv inn adresse", "Skriv inn koordinater", "Plasser i kart"], no_selection_label="Velg"))
-    contact_person = st.text_input(f"Kontaktperson")
+    well_placement_input(selectbox("Plassering av brønn", ["Skriv inn adresse", "Plasser i kart"], no_selection_label="Velg"))
+    contact_person = st.text_input(f"Kontaktperson", value = st.session_state.contact_person)
+    if len(contact_person) > 0:
+        st.session_state.contact_person = contact_person
 
     if (len(project_name) > 0) and len(contact_person) > 0:
         if st.button("Registrer", on_click=toggle_closed_expander("project_info_expanded", "project_info_check"), key = "project"):
             st.rerun()
+#----------------------
 
+#st session state
+if 'collector_length' not in st.session_state:
+    st.session_state.collector_length = 0
+if 'collector_type_index' not in st.session_state:
+    st.session_state.collector_type_index = 0
+if 'lat' not in st.session_state:
+    st.session_state.lat = None
+if 'long' not in st.session_state:
+    st.session_state.long = None
+
+#----------------------
 if "technical_info_expanded" not in st.session_state:
     st.session_state.technical_info_expanded = False
 if "technical_info_check" not in st.session_state:
@@ -70,8 +87,14 @@ else:
     technical_info_check = "✗"
 
 with st.expander(f"{technical_info_check} Brønn og kollektor", expanded=st.session_state.technical_info_expanded):
-    collector_length = st.number_input("Kollektorlengde [m]", min_value = None, step = 10)
-    collector_type = selectbox("Kollektortype", ["Egendefinert", "Enkel-U", "Dobbel-U"], no_selection_label="Velg", key = "bk1")
+    collector_length = st.number_input("Kollektorlengde [m]", min_value = None, value = st.session_state.collector_length, step = 10)
+    if collector_length > 0:
+        st.session_state.collector_length = collector_length 
+
+    collector_list = ["Egendefinert", "Enkel-U", "Dobbel-U"]    
+    collector_type = selectbox("Kollektortype", collector_list, no_selection_label="Velg", key = "bk1")
+    if collector_type != None:
+        st.session_state.collector_type_index = collector_list.index(collector_type)
     if collector_type == "Egendefinert":
         collector_type = st.text_input("Skriv inn kollektortype")
         st.markdown("---")
@@ -85,7 +108,9 @@ with st.expander(f"{technical_info_check} Brønn og kollektor", expanded=st.sess
         st.markdown("---")
     if collector_type != None and collector_fluid != None and collector_length != None and casing_diameter != None:
         st.button("Registrer", on_click=toggle_closed_expander("technical_info_expanded", "technical_info_check"), key = "technical")
+#----------------------
 
+#----------------------
 if "temperature_before_expanded" not in st.session_state:
     st.session_state.temperature_before_expanded = False
 if "temperature_before_check" not in st.session_state:
@@ -123,7 +148,9 @@ with st.expander(f"{temperature_before_check} Temperaturprofil før", expanded=s
     #temperature_plot(df = edited_df_before, color = "green")
     if edited_df_before["Temperatur"].isna().sum() == 0:
         st.button("Registrer", on_click=toggle_closed_expander("temperature_before_expanded", "temperature_before_check"), key = "temperature_before")
+#----------------------
 
+#----------------------
 if "temperature_after_expanded" not in st.session_state:
     st.session_state.temperature_after_expanded = False
 if "temperature_after_check" not in st.session_state:
@@ -161,9 +188,30 @@ with st.expander(f"{temperature_after_check} Temperaturprofil etter", expanded=s
     #temperature_plot(df = edited_df_after, color = "red")
     if edited_df_after["Temperatur"].isna().sum() == 0:
         st.button("Registrer", on_click=toggle_closed_expander("temperature_after_expanded", "temperature_after_check"), key = "temperature_after")
+#----------------------
 
-
+#----------------------
 comment = st.text_area("Eventuelle kommentarer")
 uploaded_files = st.file_uploader("Last opp eventuelle vedlegg (bilder, testdata, andre filer)", accept_multiple_files=True)
 
 switch_pages(previous_page_destination="Hjem", previous_page_text="Forrige", next_page_destination="Neste", next_page_text = "Ny_test_2")
+#----------------------
+
+#client = pymongo.MongoClient(**st.secrets["mongo"])
+client = pymongo.MongoClient("mongodb+srv://magnesyljuasen:ocCjTVUFd7ox5jUQ@atlascluster.gkdobnl.mongodb.net/")
+mydb = client["trt_database"]
+mycol = mydb["prosjekter"]
+
+new_data = {
+    'prosjektnavn': f'{project_name}', 
+    'kollektorvæske': f'{collector_fluid}', 
+    'kontaktperson': f'{contact_person}',
+    'kollektortype' : f'{collector_type}',
+    'kollektorvæske' : f'{collector_fluid}',
+    'kollektorlengde' : f'{collector_length}',
+    'diameter_foringsrør' : f'{casing_diameter}',
+    'temperaturprofil_før_dato' : f'{date}',
+    }
+
+filter_criteria = {'prosjektnavn': f'{project_name}'}
+mycol.update_one(filter_criteria, {'$set': new_data}, upsert=True)
