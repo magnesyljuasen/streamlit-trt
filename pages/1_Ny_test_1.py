@@ -10,67 +10,87 @@ import pymongo
 from streamlit_extras.switch_page_button import switch_page
 from streamlit_extras.no_default_selectbox import selectbox
 from streamlit_extras.add_vertical_space import add_vertical_space
-from src.scripts import streamlit_settings, switch_pages, toggle_closed_expander
+from src.scripts import streamlit_settings, switch_pages, toggle_closed_expander, login
+
 
 import requests
 import re
 import folium
 from streamlit_folium import st_folium
 from datetime import date
+from datetime import datetime
 import utm
 import csv
 import json
 
 ########## FUNKSJONER #################################################################################################################################################################
+def frontpage(name, authentication_status, username, authenticator):
+    # ugyldig passord
+    if authentication_status == False:
+        st.error('Ugyldig brukernavn/passord')
+        logged_in = False
+    # ingen input
+    elif authentication_status == None:
+        st.image(Image.open('src/data/img/av_logo.png'), caption = "TRT")
+        logged_in = False
+    # app start
+    elif authentication_status:
+        logged_in == True
+
 def well_placement_input(text_string):
+    address = address_loaded
+    lat = lat_loaded
+    long = long_loaded
     if text_string == "Skriv inn adresse og plasser på kart":
-        c1, c2 = st.columns(2)
-        with c1:
-            address = st.text_input("Søk etter addresse",value=st.session_state.address)
+        c1,c2,c3,c4 = st.columns([0.05,0.5,0.5,0.05])
         with c2:
-            place = st.text_input("Legg by/sted til søket (hvis nødvendig)",value=st.session_state.place)
+            address = st.text_input("Søk etter addresse", value=address_loaded)
+        with c3:
+            place = st.text_input("Legg by/sted til søket (hvis nødvendig)")
         
         if len(address)>2:
-            st.session_state.address = address
-            st.session_state.place = place
-
-            [lat,long] = adresse_til_koordinat(address,place)
-            if lat != lat or long != long:
+            [lat_search,long_search] = adresse_til_koordinat(address,place)
+            if lat_search != lat_search or long_search != long_search:
                 st.info('Adresse ikke funnet, prøv en annen skrivemåte, eller velg å skrive inn koordinater.')
             else:
                 #map_with_point(lat,long)
                 st.write('Klikk på kartet for å velge plassering av brønnen:')
-                m = folium.Map(location=[lat, long], zoom_start=16)
-                if st.session_state.lat != None:
-                    folium.Marker([st.session_state.lat, st.session_state.long]).add_to(m)
+                m = folium.Map(location=[lat_search, long_search], zoom_start=16)
+                if lat_loaded != None:
+                    folium.Marker([lat_loaded, long_loaded]).add_to(m)
+                
                 m.add_child(folium.LatLngPopup())
                 coord_json = st_folium(m,height=400,width=725)
                 
                 if coord_json['last_clicked']:
                     lat = coord_json['last_clicked']['lat']
                     long = coord_json['last_clicked']['lng']
-                    
-                    st.session_state.lat = float(lat)
-                    st.session_state.long = float(long)
-                
+            
+                else:
+                    lat = lat_loaded
+                    long = long_loaded
                     c1,c2 = st.columns(2)
-                    with c1:
-                        st.metric('Valgt breddegrad:',st.session_state.lat)
-                    with c2:
-                        st.metric('Valgt lengdegrad:',st.session_state.long)
+
+                c1,c2 = st.columns(2)
+                with c1:
+                    st.metric('Valgt breddegrad:', lat)
+                with c2:
+                    st.metric('Valgt lengdegrad:', long)
                     
 
     elif text_string == "Skriv inn koordinater":
         coord_system_options = ['EU89 - Geografisk, grader (Lat/Lon)', 'EU89, UTM-sone 31', 'EU89, UTM-sone 32', 'EU89, UTM-sone 33']
-        projection = st.selectbox('Velg koordinatsystem',options=coord_system_options,index=st.session_state.coord_system_index)
+        c1,c2,c3 = st.columns([0.05,1,0.05])
+        with c2:
+            projection = st.selectbox('Velg koordinatsystem', options=coord_system_options, index=st.session_state.coord_system_index)
         if projection != coord_system_options[st.session_state.coord_system_index]:
             st.session_state.changed_coords = 0
             st.session_state.coord_system_index = coord_system_options.index(projection)
         
         if projection == 'EU89 - Geografisk, grader (Lat/Lon)':
-            if st.session_state.lat != None:
-                ns_value = st.session_state.long
-                ov_value = st.session_state.lat
+            if lat_loaded != None:
+                ns_value = long_loaded
+                ov_value = lat_loaded
             else: 
                 ns_value = 0.0
                 ov_value = 0.0
@@ -83,8 +103,9 @@ def well_placement_input(text_string):
             step_length = 0.1
             if projection == 'EU89, UTM-sone 31':
                 zone = 31
+                #if lat_loaded != None:
                 if st.session_state.changed_coords < 1:
-                    utm_tuple = utm.from_latlon(st.session_state.lat, st.session_state.long, 31, 'V')
+                    utm_tuple = utm.from_latlon(lat_loaded, long_loaded, 31, 'V')
                     st.session_state.lat_31 = utm_tuple[0]
                     st.session_state.long_31 = utm_tuple[1]
                     st.session_state.changed_coords = st.session_state.changed_coords + 1
@@ -94,7 +115,7 @@ def well_placement_input(text_string):
             elif projection == 'EU89, UTM-sone 32':
                 zone = 32
                 if st.session_state.changed_coords < 1:
-                    utm_tuple = utm.from_latlon(st.session_state.lat, st.session_state.long, 32, 'V')
+                    utm_tuple = utm.from_latlon(lat_loaded, long_loaded, 32, 'V')
                     st.session_state.lat_32 = utm_tuple[0]
                     st.session_state.long_32 = utm_tuple[1]
                     st.session_state.changed_coords = st.session_state.changed_coords + 1
@@ -104,17 +125,17 @@ def well_placement_input(text_string):
             elif projection == 'EU89, UTM-sone 33':
                 zone = 33
                 if st.session_state.changed_coords < 1:
-                    utm_tuple = utm.from_latlon(st.session_state.lat, st.session_state.long, 33, 'V')
+                    utm_tuple = utm.from_latlon(lat_loaded, long_loaded, 33, 'V')
                     st.session_state.lat_33 = utm_tuple[0]
                     st.session_state.long_33 = utm_tuple[1]
                     st.session_state.changed_coords = st.session_state.changed_coords + 1
                 ns_value = st.session_state.long_33
                 ov_value = st.session_state.lat_33
 
-        c1, c2 = st.columns(2)
-        with c1:
-            lat = st.number_input("Breddegrad/Latitude (Nord-koordinat/ØV)", value = ov_value, step=step_length, format=number_format)
+        c1,c2,c3,c4 = st.columns([0.05,0.5,0.5,0.05])
         with c2:
+            lat = st.number_input("Breddegrad/Latitude (Nord-koordinat/ØV)", value = ov_value, step=step_length, format=number_format)
+        with c3:
             long = st.number_input("Lengdegrad/Longitude (Øst-koordinat/NS)", value = ns_value, step=step_length, format=number_format)
         
         if zone > 0:
@@ -123,9 +144,12 @@ def well_placement_input(text_string):
             lat = utm_tuple[0]
             long = utm_tuple[1]
         
-        st.session_state.lat = lat
-        st.session_state.long = long
-        map_with_point(st.session_state.lat,st.session_state.long)
+        #st.session_state.lat = lat
+        #st.session_state.long = long
+        map_with_point(lat, long)
+    
+    
+    return address, lat, long
     
 def adresse_til_koordinat(adresse,sted):
     API_KEY = "400f888f4da9461387721ccbd1a0e0db"
@@ -177,474 +201,470 @@ def temperature_plot(df, before_after):
     fig.update_xaxes(range=[min_x, max_x])
     st.plotly_chart(fig, config={'staticPlot': True}, use_container_width=True)
 
+########## START PÅ STREAMLIT-SIDE #################################################################################################################################################################
 streamlit_settings()
+st.header('Registrering av termisk responstest')
+name, authentication_status, username, authenticator = login()
+logged_in = frontpage(name, authentication_status, username, authenticator)
 
-########## INFORMASJON OM PROSJEKTET #################################################################################################################################################################
-if 'project_name' not in st.session_state:
-    st.session_state.project_name = ""
+#streamlit_settings()
+if logged_in == True:
+    new_or_load = st.selectbox('Registrer nytt prosjekt eller fortsett på eksisterende', options=['', 'Registrer nytt', 'Fortsett på eksisterende'], index=0)
 
-if 'placement_type_index' not in st.session_state:
-    st.session_state.placement_type_index = 1
+    if new_or_load == 'Registrer nytt': 
+        project_name_loaded = ''
+        address_loaded = ''
+        lat_loaded = 0
+        long_loaded = 0
+        contact_person_loaded = ''
+        collector_length_loaded = 0
+        collector_type_loaded = ''
+        collector_fluid_loaded = ''
+        well_diameter_loaded = 0
+        casing_diameter_loaded = 0
+        date_before_loaded = ''
+        ground_water_level_before_loaded = 0
+        depth_array_before_loaded = ''
+        temp_array_before_loaded = ''
+        date_after_loaded = ''
+        ground_water_level_after_loaded = 0
+        depth_array_after_loaded = ''
+        temp_array_after_loaded = ''
+        power_before_loaded = 0
+        power_after_loaded = 0
+        comment_loaded = ''
 
-if 'address' not in st.session_state:
-    st.session_state.address = ''
-if 'place' not in st.session_state:
-    st.session_state.place = ''
-if 'coord_system_index' not in st.session_state:
-    st.session_state.coord_system_index = 0
+    client = pymongo.MongoClient("mongodb+srv://magnesyljuasen:jau0IMk5OKJWJ3Xl@cluster0.dlyj4y2.mongodb.net/")
+    db = client["TRT"]
+    collection = db["TRT"]
+    cursor = collection.find({})
 
-if 'lat_31' not in st.session_state:
-    st.session_state.lat_31 = 0.0
-if 'long_31' not in st.session_state:
-    st.session_state.long_31 = 0.0
-if 'lat_32' not in st.session_state:
-    st.session_state.lat_32 = 0.0
-if 'long_32' not in st.session_state:
-    st.session_state.long_32 = 0.0
-if 'lat_33' not in st.session_state:
-    st.session_state.lat_33 = 0.0
-if 'long_33' not in st.session_state:
-    st.session_state.long_33 = 0.0
-if 'changed_coords' not in st.session_state:
-    st.session_state.changed_coords = 0
+    if new_or_load == 'Fortsett på eksisterende':
+        existing_projects = []
+        for doc in cursor:
+            existing_projects.append(doc['Prosjektnavn'])
+        project_loaded = st.selectbox('Velg prosjekt', options=existing_projects)
 
-if 'lat' not in st.session_state:
-    st.session_state.lat = None
-if 'long' not in st.session_state:
-    st.session_state.long = None
-
-if 'contact_person' not in st.session_state:
-    st.session_state.contact_person = ""
-
-if "project_info_expanded" not in st.session_state:
-    st.session_state.project_info_expanded = True
-if "project_info_check" not in st.session_state:
-    st.session_state.project_info_check = False
-if st.session_state.project_info_check == True:
-    project_info_check = "✅"
-else:
-    project_info_check = "✗"
-
-# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------    
-with st.expander(f"{project_info_check} Informasjon om prosjektet", expanded=st.session_state.project_info_expanded):
-    project_name = st.text_input("Navn på prosjektet", value = st.session_state.project_name)
-    if len(project_name) > 0:
-        st.session_state.project_name = project_name
-    
-    placement_options = ["Skriv inn koordinater","Skriv inn adresse og plasser på kart"]
-    placement_selection = st.selectbox("Plassering av brønn", options=placement_options, index=st.session_state.placement_type_index)
-    well_placement_input(placement_selection)
-    if placement_selection != placement_options[st.session_state.placement_type_index]:
-        st.session_state.changed_coords = 0
-        st.session_state.placement_type_index = placement_options.index(placement_selection)
-
-    contact_person = st.text_input(f"Kontaktperson", value = st.session_state.contact_person)
-    if len(contact_person) > 0:
-        st.session_state.contact_person = contact_person
-
-    if (len(project_name) > 0) and len(contact_person) > 0:
-        if st.button("Registrer", on_click=toggle_closed_expander("project_info_expanded", "project_info_check"), key = "project"):
-            st.experimental_rerun()
-
-########## BRØNN OG KOLLEKTOR #################################################################################################################################################################
-if 'collector_length' not in st.session_state:
-    st.session_state.collector_length = 0
-
-if 'collector_type_index' not in st.session_state:
-    st.session_state.collector_type_index = 0
-if 'collector_type' not in st.session_state:
-    st.session_state.collector_type = ''
-if 'collector_type_custom' not in st.session_state:
-    st.session_state.collector_type_custom = ''
-
-if 'collector_fluid_index' not in st.session_state:
-    st.session_state.collector_fluid_index = 0
-if 'collector_fluid' not in st.session_state:
-    st.session_state.collector_fluid = 0
-if 'collector_fluid_custom' not in st.session_state:
-    st.session_state.collector_fluid_custom = 0
-
-if 'well_diameter_index' not in st.session_state:
-    st.session_state.well_diameter_index = 0
-if 'well_diameter' not in st.session_state:
-    st.session_state.well_diameter = 0
-if 'well_diameter_custom' not in st.session_state:
-    st.session_state.well_diameter_custom = 0
-
-if 'casing_diameter_index' not in st.session_state:
-    st.session_state.casing_diameter_index = 0
-if 'casing_diameter' not in st.session_state:
-    st.session_state.casing_diameter = 0
-if 'casing_diameter_custom' not in st.session_state:
-    st.session_state.casing_diameter_custom = 0
-
-if "technical_info_expanded" not in st.session_state:
-    st.session_state.technical_info_expanded = False
-if "technical_info_check" not in st.session_state:
-    st.session_state.technical_info_check = False
-if st.session_state.technical_info_check == True:
-    technical_info_check = "✅"
-else:
-    technical_info_check = "✗"
-
-# ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-with st.expander(f"{technical_info_check} Brønn og kollektor", expanded=st.session_state.technical_info_expanded):
-
-    collector_length = st.number_input("Kollektorlengde [m]", min_value = None, value = st.session_state.collector_length, step = 10)
-    if collector_length > 0:
-        if collector_length != st.session_state.collector_length:
-            st.session_state.df_before = pd.DataFrame()
-            st.session_state.depth_array_before = np.arange(0,0)
-            st.session_state.temp_array_before = np.arange(0,0)
-            st.session_state.df_after = pd.DataFrame()
-            st.session_state.depth_array_after = np.arange(0,0)
-            st.session_state.temp_array_after = np.arange(0,0)
-        st.session_state.collector_length = collector_length 
-
-    collector_type_list = ['',"Enkel-U", "Dobbel-U","Egendefinert"]    
-    collector_type = st.selectbox("Kollektortype", collector_type_list, index=st.session_state.collector_type_index, placeholder = "Velg", key = "bk1") 
-    if collector_type != '':
-        st.session_state.collector_type_index = collector_type_list.index(collector_type)
-    if collector_type == "Egendefinert":
-        c1,c2,c3 = st.columns([0.05,1,0.05])
-        with c2:
-            collector_type = st.text_input("Skriv inn kollektortype",value =st.session_state.collector_type_custom)
-        st.session_state.collector_type_custom = collector_type
-    st.session_state.collector_type = collector_type
-    
-    collector_fluid_list = ['', "HX24", "HX35", "Kilfrost Geo 24 %", "Kilfrost Geo 30 %", "Kilfrost Geo 35 %", "Egendefinert"]
-    collector_fluid = st.selectbox("Kollektorvæske", options = collector_fluid_list, index=st.session_state.collector_fluid_index, placeholder="Velg", key = "bk2")
-    if collector_fluid != '':
-        st.session_state.collector_fluid_index = collector_fluid_list.index(collector_fluid)
-    if collector_fluid == "Egendefinert":
-        c1,c2,c3 = st.columns([0.05,1,0.05])
-        with c2:
-            collector_fluid = st.text_input("Skriv inn kollektorvæske",value=st.session_state.collector_fluid_custom)
-        st.session_state.collector_fluid_custom = collector_fluid
-    st.session_state.collector_fluid = collector_fluid
-    
-    well_diameter_list = ['', "115 mm", "Egendefinert"]
-    well_diameter_str = st.selectbox("Diameter borehull", options=well_diameter_list, index=st.session_state.well_diameter_index, placeholder="Velg", key = "bk3")
-    st.session_state.well_diameter_index = well_diameter_list.index(well_diameter_str)
-    if well_diameter_str == "Egendefinert":
-        c1,c2,c3 = st.columns([0.05,1,0.05])
-        with c2:
-            well_diameter = st.number_input("Egendefinert borehull-diameter (mm)", value=st.session_state.well_diameter_custom, min_value=0, step=1)
-        st.session_state.well_diameter_custom = well_diameter
-    elif 'mm' in well_diameter_str:
-        well_diameter = int(well_diameter_str.replace(' mm',''))
-    else:
-        well_diameter = None
-    if well_diameter_str != '':
-        st.session_state.well_diameter = well_diameter
-
-    casing_diameter_list = ['', "139 mm", "Egendefinert"]
-    casing_diameter_str = st.selectbox("Diameter foringsrør", options=casing_diameter_list, index=st.session_state.casing_diameter_index, placeholder="Velg", key = "bk4")
-    st.session_state.casing_diameter_index = casing_diameter_list.index(casing_diameter_str)
-    if casing_diameter_str == "Egendefinert":
-        c1,c2,c3 = st.columns([0.05,1,0.05])
-        with c2:
-            casing_diameter = st.number_input("Egendefinert foringsrør-diameter (mm)", value=st.session_state.casing_diameter_custom, min_value=0, step=1)
-        st.session_state.casing_diameter_custom = casing_diameter
-    elif 'mm' in casing_diameter_str:
-        casing_diameter = int(casing_diameter_str.replace(' mm',''))
-    else:
-        casing_diameter = None
-    if casing_diameter_str != '':
-        st.session_state.casing_diameter = casing_diameter
-    
-    if collector_type != None and collector_fluid != None and collector_length != None and well_diameter != None and casing_diameter != None:
-        st.button("Registrer", on_click=toggle_closed_expander("technical_info_expanded", "technical_info_check"), key = "technical")
-
-########## TEMPERATURPROFIL FØR #################################################################################################################################################################
-if 'date_before' not in st.session_state:
-    st.session_state.date_before = date.today()
-if 'ground_water_level_before' not in st.session_state:
-    st.session_state.ground_water_level_before = 0
-if 'step_before' not in st.session_state:
-    st.session_state.step_before = 10
-if 'df_before' not in st.session_state or 'df_before' == 'RESET':
-    st.session_state.df_before = pd.DataFrame()
-if 'depth_array_before' not in st.session_state or 'depth_array_before' == 'RESET':
-    st.session_state.depth_array_before = np.arange(0,0)
-if 'temp_array_before' not in st.session_state or 'temp_array_before' == 'RESET':
-    st.session_state.temp_array_before = np.arange(0,0)
-
-if "temperature_before_expanded" not in st.session_state:
-    st.session_state.temperature_before_expanded = False
-if "temperature_before_check" not in st.session_state:
-    st.session_state.temperature_before_check = False
-if st.session_state.temperature_before_check == True:
-    temperature_before_check = "✅"
-else:
-    temperature_before_check = "✗"  
-
-# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-with st.expander(f"{temperature_before_check} Temperaturprofil før", expanded=st.session_state.temperature_before_expanded):
-    date_before = st.date_input("Måledato (før test)", value = st.session_state.date_before)
-    st.session_state.date_before = date_before
-    ground_water_level_before = st.number_input("Grunnvansnivå før test [m]", value = st.session_state.ground_water_level_before, step = 1)
-    st.session_state.ground_water_level_before = ground_water_level_before
-    step_before = st.number_input('Oppløsning på temperaturmålinger (m)', min_value=1, step=1, value=st.session_state.step_before, key='step_before_key')
-    if step_before != st.session_state.step_before:
-        st.session_state.df_before = pd.DataFrame()
-        st.session_state.depth_array_before = np.arange(0,0)
-        st.session_state.temp_array_before = np.arange(0,0)
-    st.session_state.step_before = step_before
-    
-    depth_array = np.arange(0, collector_length + step_before, step_before)
-    temperature_array = np.arange(0, collector_length + step_before, step_before)
-    temperature_array = np.full(len(temperature_array), None)
-    if st.session_state.df_before.empty:
-        df_before = pd.DataFrame({"Dybde" : depth_array, "Temperatur" : temperature_array})
-    else:
-        df_before = st.session_state.df_before
-    
-    edited_df_before = st.data_editor(
-        df_before, 
-        hide_index = True, 
-        use_container_width=True,
-        column_config={
-            "Temperatur": st.column_config.NumberColumn("Temperatur", format="%.1f °C"),
-            "Dybde": st.column_config.NumberColumn("Dybde", format="%f m", )
-            },
-        key = "temperature_before_df"
-        )
-    st.session_state.date_before = date_before
-    st.session_state.ground_water_level_before = ground_water_level_before
-    st.session_state.depth_array_before = np.array(edited_df_before['Dybde'])
-    st.session_state.temp_array_before = np.array(edited_df_before['Temperatur'])
-
-    temperature_plot(df = edited_df_before, before_after='før')
-    #if edited_df_before["Temperatur"].count() >= 5:   #Lar deg gå videre hvis det er fylt inn minst 5 tall
-    if edited_df_before["Temperatur"].isna().sum() == 0:
-        st.session_state.df_before = edited_df_before
-        st.button("Registrer", on_click=toggle_closed_expander("temperature_before_expanded", "temperature_before_check"), key = "temperature_before")
-
-########## TEMPERATURPROFIL ETTER #################################################################################################################################################################
-if 'date_after' not in st.session_state:
-    st.session_state.date_after = date.today()
-if 'ground_water_level_after' not in st.session_state:
-    st.session_state.ground_water_level_after = 0
-if 'step_after' not in st.session_state:
-    st.session_state.step_after = 10
-if 'df_after' not in st.session_state:
-    st.session_state.df_after = pd.DataFrame()
-if 'depth_array_after' not in st.session_state:
-    st.session_state.depth_array_after = np.arange(0,0)
-if 'temp_array_after' not in st.session_state:
-    st.session_state.temp_array_after = np.arange(0,0)
-
-if "temperature_after_expanded" not in st.session_state:
-    st.session_state.temperature_after_expanded = False
-if "temperature_after_check" not in st.session_state:
-    st.session_state.temperature_after_check = False
-if st.session_state.temperature_after_check == True:
-    temperature_after_check = "✅"
-else:
-    temperature_after_check = "✗"  
-
-# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-with st.expander(f"{temperature_after_check} Temperaturprofil etter", expanded=st.session_state.temperature_after_expanded):
-    date_after = st.date_input("Måledato (etter test)", value = st.session_state.date_after)
-    st.session_state.date_after = date_after
-    ground_water_level_after = st.number_input("Grunnvansnivå etter test [m]", value = st.session_state.ground_water_level_after, step = 1)
-    st.session_state.ground_water_level_after = ground_water_level_after
-    step_after = st.number_input('Oppløsning på temperaturmålinger (m)', min_value=1, step=1, value=st.session_state.step_after, key='step_after_key')
-    if step_after != st.session_state.step_after:
-        st.session_state.df_after = pd.DataFrame()
-        st.session_state.depth_array_after = np.arange(0,0)
-        st.session_state.temp_array_after = np.arange(0,0)
-    st.session_state.step_after = step_after
-    
-    depth_array = np.arange(0, collector_length + step_after, step_after)
-    temperature_array = np.arange(0, collector_length + step_after, step_after)
-    temperature_array = np.full(len(temperature_array), None)
-    if st.session_state.df_after.empty:
-        df_after = pd.DataFrame({"Dybde" : depth_array, "Temperatur" : temperature_array})
-    else:
-        df_after = st.session_state.df_after
-    
-    edited_df_after = st.data_editor(
-        df_after, 
-        hide_index = True, 
-        use_container_width=True,
-        column_config={
-            "Temperatur": st.column_config.NumberColumn("Temperatur", format="%.1f °C"),
-            "Dybde": st.column_config.NumberColumn("Dybde", format="%f m", )
-            },
-        key = "temperature_after_df"
-        )
-    st.session_state.date_after = date_after
-    st.session_state.ground_water_level_after = ground_water_level_after
-    st.session_state.depth_array_after = np.array(edited_df_after['Dybde'])
-    st.session_state.temp_array_after = np.array(edited_df_after['Temperatur'])
-
-    temperature_plot(df = edited_df_after, before_after='etter')
-    #if edited_df_after["Temperatur"].count() >= 5:   #Lar deg gå videre hvis det er fylt inn minst 5 tall
-    if edited_df_after["Temperatur"].isna().sum() == 0:
-        st.session_state.df_after = edited_df_after
-        st.button("Registrer", on_click=toggle_closed_expander("temperature_after_expanded", "temperature_after_check"), key = "temperature_after")
-
-########## STRØMMÅLER FØR #################################################################################################################################################################
-if 'power_before' not in st.session_state:
-    st.session_state.power_before = 0
-
-if "power_before_expanded" not in st.session_state:
-    st.session_state.power_before_expanded = False
-if "power_before_check" not in st.session_state:
-    st.session_state.power_before_check = False
-if st.session_state.power_before_check == True:
-    power_before_check = "✅"
-else:
-    power_before_check = "✗"
-
-# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-with st.expander(f"{power_before_check} Strømmåler før", expanded=st.session_state.power_before_expanded):
-    power_before = st.number_input("Strømmåler før", value = st.session_state.power_before)
-    power_before_file = st.file_uploader("Last gjerne opp bilde av strømmåler før test")
-    if power_before > 0:
-        st.session_state.power_before = power_before
-    if power_before > 0:
-        st.button("Registrer", on_click=toggle_closed_expander("power_before_expanded", "power_before_check"), key = "power_before_button") 
-    
-########## STRØMMÅLER ETTER #################################################################################################################################################################
-if 'power_after' not in st.session_state:
-    st.session_state.power_after = 0
-
-if "power_after_expanded" not in st.session_state:
-    st.session_state.power_after_expanded = False
-if "power_after_check" not in st.session_state:
-    st.session_state.power_after_check = False
-if st.session_state.power_after_check == True:
-    power_after_check = "✅"
-else:
-    power_after_check = "✗"
-
-# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-with st.expander(f"{power_after_check} Strømmåler etter", expanded=st.session_state.power_after_expanded):
-    power_after = st.number_input("Strømmåler etter", value = st.session_state.power_after)
-    power_after_file = st.file_uploader("Last gjerne opp bilde av strømmåler etter test")
-    if power_after > 0:
-        st.session_state.power_after = power_after
-    if power_after > 0:
-        st.button("Registrer", on_click=toggle_closed_expander("power_after_expanded", "power_after_check"), key = "power_after_button") 
-    
-########## KOMMENTARER #################################################################################################################################################################
-if 'comment' not in st.session_state:
-    st.session_state.comment = ''
-# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-comment = st.text_area("Eventuelle kommentarer", value=st.session_state.comment)
-st.session_state.comment = comment
-uploaded_files = st.file_uploader("Last opp eventuelle vedlegg (bilder, testdata, andre filer)", accept_multiple_files=True)
-
-make_file_button = st.button('Lag fil/Fullfør/(...)')
-
-########## SIDEBYTTE #################################################################################################################################################################
-switch_pages(previous_page_destination="Hjem", previous_page_text="Forrige", next_page_destination="Neste", next_page_text = "Ny_test_2")
+    if new_or_load == 'Fortsett på eksisterende':
+        client = pymongo.MongoClient("mongodb+srv://magnesyljuasen:jau0IMk5OKJWJ3Xl@cluster0.dlyj4y2.mongodb.net/")
+        db = client["TRT"]
+        collection = db["TRT"]
+        cursor = collection.find({})
+        for document in cursor:
+            if document['Prosjektnavn'] == project_loaded:
+                #st.write(document)
+                project_name_loaded = document['Prosjektnavn']
+                address_loaded = document['Adresse']
+                lat_loaded = document['Latitude']
+                long_loaded = document['Longitude']
+                contact_person_loaded = document['Kontaktperson']
+                collector_length_loaded = document['Kollektorlengde']
+                collector_type_loaded = document['Kollektortype']
+                collector_fluid_loaded = document['Kollektorvæske']
+                well_diameter_loaded = document['Brønndiameter']
+                casing_diameter_loaded = document['Foringsrørdiameter']
+                date_before_loaded = document['Måledato temperaturprofil før test']
+                ground_water_level_before_loaded = document['Grunnvannsnivå før test']
+                depth_array_before_loaded = document['Posisjoner temperaturmålinger før test']
+                temp_array_before_loaded = document['Temperaturmålinger før test']
+                date_after_loaded = document['Måledato temperaturprofil etter test']
+                ground_water_level_after_loaded = document['Grunnvannsnivå etter test']
+                depth_array_after_loaded = document['Posisjoner temperaturmålinger etter test']
+                temp_array_after_loaded = document['Temperaturmålinger etter test']
+                power_before_loaded = document['Strømmåler før']
+                power_after_loaded = document['Strømmåler etter']
+                comment_loaded = document['Kommentar']
 
 
-#client = pymongo.MongoClient(**st.secrets["mongo"])
-#client = pymongo.MongoClient("mongodb+srv://magnesyljuasen:ocCjTVUFd7ox5jUQ@atlascluster.gkdobnl.mongodb.net/")
-#mydb = client["trt_database"]
-#mycol = mydb["prosjekter"]
-
-#new_data = {
-#    'prosjektnavn': f'{project_name}', 
-#    'kollektorvæske': f'{collector_fluid}', 
-#    'kontaktperson': f'{contact_person}',
-#    'kollektortype' : f'{collector_type}',
-#    'kollektorvæske' : f'{collector_fluid}',
-#    'kollektorlengde' : f'{collector_length}',
-#    'diameter_foringsrør' : f'{casing_diameter}',
-#    'temperaturprofil_før_dato' : f'{date_before}',
-#    }
-
-#filter_criteria = {'prosjektnavn': f'{project_name}'}
-#mycol.update_one(filter_criteria, {'$set': new_data}, upsert=True)
-
-########## LAGRE TIL CSV-FIL #################################################################################################################################################################
-
-if make_file_button == True:
-
-    filename = f"TRT_info_{st.session_state.project_name}.csv"
-    with open(filename, 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile, delimiter=';')
-
-        writer.writerow(['Prosjektnavn', st.session_state.project_name])
-        writer.writerow(['Latitude', st.session_state.lat])
-        writer.writerow(['Longitude', st.session_state.long])
-        writer.writerow(['Kontaktperson', st.session_state.contact_person])
+    if new_or_load != '':
+    ########## CSS FOR TABS #################################################################################################################################################################
+    #    st.markdown("""
+    #    <style>
+    #        .stTabs [data-baseweb="tab-list"] {
+    #            display: flex;
+    #            flex-direction: column; /* Change direction to column */
+    #            gap: 0px;
+    #        }
+    #        .stTabs [data-baseweb="tab"] {
+    #            height: 0px;
+    #            padding: 10px;
+    #            cursor: pointer;
+    #            border: 1px solid transparent;
+    #            /*border-color: #000000;*/
+    #        }
+    #        .stTabs [aria-selected="true"] {
+    #            background-color: #F0F2F6;
+    #        }
+    #    </style>""", unsafe_allow_html=True)
         
-        writer.writerow(['Kollektorlengde', st.session_state.collector_length])
-        writer.writerow(['Kollektortype', st.session_state.collector_type])
-        writer.writerow(['Kollektorvæske', st.session_state.collector_fluid])
-        writer.writerow(['Brønndiameter', st.session_state.well_diameter])
-        writer.writerow(['Foringsrørdiameter', st.session_state.casing_diameter])
-        
-        writer.writerow(['Måledato temperaturprofil før test', st.session_state.date_before])
-        writer.writerow(['Grunnvannsnivå før test', st.session_state.ground_water_level_before])
-        writer.writerow(['Posisjoner temperaturmålinger før test', st.session_state.depth_array_before])
-        writer.writerow(['Temperaturmålinger før test', st.session_state.temp_array_before])
-        
-        writer.writerow(['Måledato temperaturprofil etter test', st.session_state.date_after])
-        writer.writerow(['Grunnvannsnivå etter test', st.session_state.ground_water_level_after])
-        writer.writerow(['Posisjoner temperaturmålinger etter test', st.session_state.depth_array_after])
-        writer.writerow(['Temperaturmålinger etter test', st.session_state.temp_array_after])
+        st.markdown("""
+        <style>
+            .stTabs [data-baseweb="tab-list"] {
+                display: flex;
+            }
 
-        writer.writerow(['Strømmåler før', st.session_state.power_before])
-        writer.writerow(['Strømmåler etter', st.session_state.power_after])
+            .stTabs [data-baseweb="tab"] {
+                height: 150px; /* Adjust height as needed */
+                width: 30px; /* Adjust width as needed */
+                border-radius: 0px 0px 0px 0px;
+                padding: 33px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                transform: rotate(90deg); /* Rotate the tab names 90 degrees */
+            }
 
-        writer.writerow(['Kommentar', st.session_state.comment])
+            /* .stTabs [aria-selected="true"] {background-color: blue;} */
+        </style>""", unsafe_allow_html=True)
+
+        ########## TABS #################################################################################################################################################################
+        if "tab1_done" not in st.session_state:
+            st.session_state.tab1_done = False
+        if "tab2_done" not in st.session_state:
+            st.session_state.tab2_done = False
+        if "tab3_done" not in st.session_state:
+            st.session_state.tab3_done = False
+        if "tab4_done" not in st.session_state:
+            st.session_state.tab4_done = False
+        if "tab5_done" not in st.session_state:
+            st.session_state.tab5_done = False
+        if "tab6_done" not in st.session_state:
+            st.session_state.tab6_done = False
+
+        if st.session_state.tab1_done == True:
+            tab1_name = 'Info om prosjektet ✅'
+        else:
+            tab1_name = 'Info om prosjektet ✗'
+
+        if st.session_state.tab2_done == True:
+            tab2_name = 'Brønn & kollektor ✅'
+        else:
+            tab2_name = 'Brønn & kollektor ✗'
+
+        if st.session_state.tab3_done == True:
+            tab3_name = 'Temperatur før ✅'
+        else:
+            tab3_name = 'Temperatur før ✗'
+
+        if st.session_state.tab4_done == True:
+            tab4_name = 'Temperatur etter ✅'
+        else:
+            tab4_name = 'Temperatur etter ✗'
+
+        if st.session_state.tab5_done == True:
+            tab5_name = 'Strømmåler ✅'
+        else:
+            tab5_name = 'Strømmåler ✗'
+
+        if st.session_state.tab6_done == True:
+            tab6_name = 'Kommentar ✅'
+        else:
+            tab6_name = 'Kommentar ✗'
+
+        st.markdown('---')
+        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([tab1_name, tab2_name, tab3_name, tab4_name, tab5_name, tab6_name])
+
+        with tab1:
+            ########## INFORMASJON OM PROSJEKTET #################################################################################################################################################################
+            if 'coord_system_index' not in st.session_state:
+                st.session_state.coord_system_index = 0
+
+            if 'lat_31' not in st.session_state:
+                st.session_state.lat_31 = 0.0
+            if 'long_31' not in st.session_state:
+                st.session_state.long_31 = 0.0
+            if 'lat_32' not in st.session_state:
+                st.session_state.lat_32 = 0.0
+            if 'long_32' not in st.session_state:
+                st.session_state.long_32 = 0.0
+            if 'lat_33' not in st.session_state:
+                st.session_state.lat_33 = 0.0
+            if 'long_33' not in st.session_state:
+                st.session_state.long_33 = 0.0
+            
+            if 'changed_coords' not in st.session_state:
+                st.session_state.changed_coords = 0
+
+            #if 'lat' not in st.session_state:
+            #    st.session_state.lat = None
+            #if 'long' not in st.session_state:
+            #    st.session_state.long = None
+
+            #if 'contact_person' not in st.session_state:
+            #    st.session_state.contact_person = ""
+
+            st.subheader('Informasjon om prosjektet')
+            project_name = st.text_input("Navn på prosjektet", value = project_name_loaded)
+
+            placement_options = ["Skriv inn koordinater","Skriv inn adresse og plasser på kart"]
+            placement_selection = st.selectbox("Plassering av brønn", options=placement_options, index=1)
+            [address, lat, long] = well_placement_input(placement_selection)
+
+            contact_person = st.text_input(f"Kontaktperson", value = str(contact_person_loaded))
+            if len(contact_person) > 0:
+                st.session_state.contact_person = contact_person
+                
+            if (len(project_name) > 0) and len(contact_person) > 0:
+                #st.session_state.tab1_done = True
+                tab1_done = True
+
+        with tab2:
+            ########## BRØNN OG KOLLEKTOR #################################################################################################################################################################
+            st.subheader('Brønn og kollektor')
+            collector_length = st.number_input("Kollektorlengde [m]", min_value = None, value = collector_length_loaded, step = 10)
+            #if collector_length > 0:
+                #if collector_length != st.session_state.collector_length:
+                #    st.session_state.df_before = pd.DataFrame()
+                #    st.session_state.depth_array_before = np.arange(0,0)
+                #    st.session_state.temp_array_before = np.arange(0,0)
+                #    st.session_state.df_after = pd.DataFrame()
+                #    st.session_state.depth_array_after = np.arange(0,0)
+                #    st.session_state.temp_array_after = np.arange(0,0)
+                #st.session_state.collector_length = collector_length 
+
+            collector_type_list = ['',"Enkel-U", "Dobbel-U","Egendefinert"]
+            if collector_type_loaded in collector_type_list: 
+                collector_type_index = collector_type_list.index(collector_type_loaded)
+            else:
+                collector_type_index = 3
+            collector_type = st.selectbox("Kollektortype", collector_type_list, index=collector_type_index, placeholder = "Velg", key = "bk1") 
+            if collector_type == "Egendefinert":
+                c1,c2,c3 = st.columns([0.05,1,0.05])
+                with c2:
+                    collector_type = st.text_input("Skriv inn kollektortype",value = collector_type_loaded)
+            
+            collector_fluid_list = ['', "HX24", "HX35", "Kilfrost Geo 24 %", "Kilfrost Geo 30 %", "Kilfrost Geo 35 %", "Egendefinert"]
+            if collector_fluid_loaded in collector_fluid_list:
+                collector_fluid_index = collector_fluid_list.index(collector_fluid_loaded)
+            else:
+                collector_fluid_index = 6
+            collector_fluid = st.selectbox("Kollektorvæske", options = collector_fluid_list, index=collector_fluid_index, placeholder="Velg", key = "bk2")
+            if collector_fluid == "Egendefinert":
+                c1,c2,c3 = st.columns([0.05,1,0.05])
+                with c2:
+                    collector_fluid = st.text_input("Skriv inn kollektorvæske",value=collector_fluid_loaded)
+            
+            well_diameter_list = ['', "115 mm", "Egendefinert"]
+            if well_diameter_loaded == 0:
+                well_diameter_index = 0
+            elif f'{str(well_diameter_loaded)} mm' in well_diameter_list:
+                well_diameter_index = well_diameter_list.index(f'{str(well_diameter_loaded)} mm')
+            else:
+                well_diameter_index = 2
+            well_diameter_str = st.selectbox("Diameter borehull", options=well_diameter_list, index=well_diameter_index, placeholder="Velg", key = "bk3")
+            if well_diameter_str == "Egendefinert":
+                c1,c2,c3 = st.columns([0.05,1,0.05])
+                with c2:
+                    well_diameter = st.number_input("Egendefinert borehull-diameter (mm)", value=well_diameter_loaded, min_value=0, step=1)
+            elif 'mm' in well_diameter_str:
+                well_diameter = int(well_diameter_str.replace(' mm',''))
+            else:
+                well_diameter = 0
+
+            casing_diameter_list = ['', "139 mm", "Egendefinert"]
+            if casing_diameter_loaded == 0:
+                casing_diameter_index = 0
+            elif f'{str(casing_diameter_loaded)} mm' in casing_diameter_list:
+                casing_diameter_index = casing_diameter_list.index(f'{str(casing_diameter_loaded)} mm')
+            else:
+                casing_diameter_index = 2
+            casing_diameter_str = st.selectbox("Diameter foringsrør", options=casing_diameter_list, index=casing_diameter_index, placeholder="Velg", key = "bk4")
+            if casing_diameter_str == "Egendefinert":
+                c1,c2,c3 = st.columns([0.05,1,0.05])
+                with c2:
+                    casing_diameter = st.number_input("Egendefinert foringsrør-diameter (mm)", value=casing_diameter_loaded, min_value=0, step=1)
+            elif 'mm' in casing_diameter_str:
+                casing_diameter = int(casing_diameter_str.replace(' mm',''))
+            else:
+                casing_diameter = 0
+            
+            if collector_type != '' and collector_fluid != '' and collector_length != 0 and well_diameter != 0 and casing_diameter != 0:
+                st.session_state.tab2_done = True
+
+        with tab3:
+            ########## TEMPERATURPROFIL FØR #################################################################################################################################################################
+            st.subheader('Temperaturprofil før test')
+            if date_before_loaded == '':
+                date_before_startvalue = date.today()
+            else:
+                date_before_startvalue = datetime.strptime(date_before_loaded, '%Y-%m-%d')
+            date_before = st.date_input("Måledato (før test)", value = date_before_startvalue)
+            
+            ground_water_level_before = st.number_input("Grunnvansnivå før test [m]", value = ground_water_level_before_loaded, step = 1)
+
+            if depth_array_before_loaded == '':
+                step_before_startvalue = 10
+            else:
+                elements = depth_array_before_loaded.replace('None', 'np.nan').strip('[]').split()
+                loaded_array_before = np.array([int(elem) for elem in elements])
+                if loaded_array_before[1] is not None:
+                    step_before_startvalue = int(loaded_array_before[1])
+                else:
+                    step_before_startvalue = 10
+            step_before = st.number_input('Oppløsning på temperaturmålinger (m)', min_value=1, step=1, value=step_before_startvalue, key='step_before_key')
+            
+            if depth_array_before_loaded == '':
+                depth_array = np.arange(0, collector_length + step_before, step_before)
+                temperature_array = np.arange(0, collector_length + step_before, step_before)
+                temperature_array = np.full(len(temperature_array), None)
+            else:
+                depth_array = loaded_array_before
+
+            if temp_array_before_loaded == '':
+                temperature_array = np.arange(0, collector_length + step_before, step_before)
+                temperature_array = np.full(len(temperature_array), None)
+            else:
+                elements2 = temp_array_before_loaded.replace('None', 'nan').strip('[]').split()
+                temperature_array = np.array([float(elem) for elem in elements2])
+            
+            df_before = pd.DataFrame({"Dybde" : depth_array, "Temperatur" : temperature_array})
+            
+            edited_df_before = st.data_editor(
+                df_before, 
+                hide_index = True, 
+                use_container_width=True,
+                column_config={
+                    "Temperatur": st.column_config.NumberColumn("Temperatur", format="%.1f °C"),
+                    "Dybde": st.column_config.NumberColumn("Dybde", format="%f m", )
+                    },
+                key = "temperature_before_df"
+                )
+
+            depth_array_before = np.array(edited_df_before['Dybde'])
+            temp_array_before = np.array(edited_df_before['Temperatur'])
+
+            temperature_plot(df = edited_df_before, before_after='før')
+            #if edited_df_before["Temperatur"].count() >= 5:   #Lar deg gå videre hvis det er fylt inn minst 5 tall
+            if edited_df_before["Temperatur"].isna().sum() == 0:
+                st.session_state.tab3_done = True
+
+        with tab4:
+            ########## TEMPERATURPROFIL ETTER #################################################################################################################################################################
+            st.subheader('Temperaturprofil etter test')
+            if date_after_loaded == '':
+                date_after_startvalue = date.today()
+            else:
+                date_after_startvalue = datetime.strptime(date_after_loaded, '%Y-%m-%d')
+            date_after = st.date_input("Måledato (etter test)", value = date_after_startvalue)
+            
+            ground_water_level_after = st.number_input("Grunnvansnivå etter test [m]", value = ground_water_level_after_loaded, step = 1)
+
+            if depth_array_after_loaded == '':
+                step_after_startvalue = 10
+            else:
+                elements = depth_array_after_loaded.replace('None', 'np.nan').strip('[]').split()
+                loaded_array_after = np.array([int(elem) for elem in elements])
+                if loaded_array_after[1] is not None:
+                    step_after_startvalue = int(loaded_array_after[1])
+                else:
+                    step_after_startvalue = 10
+            step_after = st.number_input('Oppløsning på temperaturmålinger (m)', min_value=1, step=1, value=step_after_startvalue, key='step_after_key')
+            
+            if depth_array_after_loaded == '':
+                depth_array = np.arange(0, collector_length + step_after, step_after)
+                temperature_array = np.arange(0, collector_length + step_after, step_after)
+                temperature_array = np.full(len(temperature_array), None)
+            else:
+                depth_array = loaded_array_after
+
+            if temp_array_after_loaded == '':
+                temperature_array = np.arange(0, collector_length + step_after, step_after)
+                temperature_array = np.full(len(temperature_array), None)
+            else:
+                elements2 = temp_array_after_loaded.replace('None', 'nan').strip('[]').split()
+                temperature_array = np.array([float(elem) for elem in elements2])
+            
+            df_after = pd.DataFrame({"Dybde" : depth_array, "Temperatur" : temperature_array})
+            
+            edited_df_after = st.data_editor(
+                df_after, 
+                hide_index = True, 
+                use_container_width=True,
+                column_config={
+                    "Temperatur": st.column_config.NumberColumn("Temperatur", format="%.1f °C"),
+                    "Dybde": st.column_config.NumberColumn("Dybde", format="%f m", )
+                    },
+                key = "temperature_after_df"
+                )
+
+            depth_array_after = np.array(edited_df_after['Dybde'])
+            temp_array_after = np.array(edited_df_after['Temperatur'])
+
+            temperature_plot(df = edited_df_after, before_after='etter')
+            #if edited_df_after["Temperatur"].count() >= 5:   #Lar deg gå videre hvis det er fylt inn minst 5 tall
+            if edited_df_after["Temperatur"].isna().sum() == 0:
+                st.session_state.tab4_done = True
+
+        with tab5:
+            ########## STRØMMÅLER #################################################################################################################################################################
+            st.subheader('Strømmåler før og etter test')
+            power_before = st.number_input("Strømmåler før", value = power_before_loaded)
+            power_before_file = st.file_uploader("Last gjerne opp bilde av strømmåler før test")
+
+            power_after = st.number_input("Strømmåler etter", value = power_after_loaded)
+            power_after_file = st.file_uploader("Last gjerne opp bilde av strømmåler etter test")
+            
+            if power_before >0 and power_after > 0:
+                st.session_state.tab5_done = True
+
+        with tab6:    
+            ########## KOMMENTARER #################################################################################################################################################################
+            st.subheader('Kommentarer')
+            comment = st.text_area("Eventuelle kommentarer", value=comment_loaded)
+            uploaded_files = st.file_uploader("Last opp eventuelle vedlegg (bilder, testdata, andre filer)", accept_multiple_files=True)
+            if len(comment) > 0:
+                st.session_state.tab6_done = True
+
+        #st.markdown('---')
+        #make_file_button = st.button('Lag fil/Fullfør/(...)')
+
+        ########## SIDEBYTTE #################################################################################################################################################################
+        #switch_pages(previous_page_destination="Hjem", previous_page_text="Forrige", next_page_destination="Neste", next_page_text = "Ny_test_2")
+        st.image(Image.open('src/data/img/AsplanViak_illustrasjoner-01.png'))
+        c1, c2 = st.columns(2)
+        with c1:
+            authenticator.logout('Logg ut')
+        with c2:
+            if st.button("Kontakt oss"):
+                switch_page("Kontakt_oss")
+
+        ########## LAGRE TIL JSON-FIL #################################################################################################################################################################
+            
+        # Define your JSON document
+
+        filename_json = f"TRT_info_{project_name}.json"
+        dict_for_json = {
+            'Prosjektnavn': project_name,
+            'Adresse': address,
+            'Latitude': lat,
+            'Longitude': long,
+            'Kontaktperson': contact_person,
+            'Kollektorlengde': collector_length,
+            'Kollektortype': collector_type,
+            'Kollektorvæske': collector_fluid,
+            'Brønndiameter': well_diameter,
+            'Foringsrørdiameter': casing_diameter,
+            'Måledato temperaturprofil før test': str(date_before),
+            'Grunnvannsnivå før test': ground_water_level_before,
+            'Posisjoner temperaturmålinger før test': str(depth_array_before),
+            'Temperaturmålinger før test': str(temp_array_before),
+            'Måledato temperaturprofil etter test': str(date_after),
+            'Grunnvannsnivå etter test': ground_water_level_after,
+            'Posisjoner temperaturmålinger etter test': str(depth_array_after),
+            'Temperaturmålinger etter test': str(temp_array_after),
+            'Strømmåler før': power_before,
+            'Strømmåler etter': power_after,
+            'Kommentar': comment
+        }
+
+        with open(filename_json, "w") as outfile:
+            json.dump(dict_for_json, outfile, default=str)
+
+        # Insert the JSON document into the collection
+        key_to_check = {"Prosjektnavn": dict_for_json["Prosjektnavn"]}
+        # Check if a document with the specified key already exists
+        existing_document = collection.find_one(key_to_check)
+        # Insert the JSON document into the collection only if it doesn't already exist
+        collection.update_one(key_to_check, {"$set": dict_for_json}, upsert=True)
 
 
-    ########## LAGRE TIL JSON-FIL #################################################################################################################################################################
-    # Connect to MongoDB
-    client = pymongo.MongoClient("mongodb+srv://magnesyljuasen:jau0IMk5OKJWJ3Xl@cluster0.dlyj4y2.mongodb.net/")  # Assuming MongoDB is running locally
-
-    db = client["TRT"]  # Replace "your_database_name" with your actual database name
-
-    collection = db["TRT"]  # Replace "your_collection_name" with your actual collection name
-    
-    # Define your JSON document
-    
-    filename_json = f"TRT_info_{st.session_state.project_name}.json"
-    dict_for_json = {
-        'Prosjektnavn': st.session_state.project_name,
-        'Latitude': st.session_state.lat,
-        'Longitude': st.session_state.long,
-        'Kontaktperson': st.session_state.contact_person,
-        'Kollektorlengde': st.session_state.collector_length,
-        'Kollektortype': st.session_state.collector_type,
-        'Kollektorvæske': st.session_state.collector_fluid,
-        'Brønndiameter': st.session_state.well_diameter,
-        'Foringsrørdiameter': st.session_state.casing_diameter,
-        'Måledato temperaturprofil før test': str(st.session_state.date_before),
-        'Grunnvannsnivå før test': st.session_state.ground_water_level_before,
-        'Posisjoner temperaturmålinger før test': str(st.session_state.depth_array_before),
-        'Temperaturmålinger før test': str(st.session_state.temp_array_before),
-        'Måledato temperaturprofil etter test': str(st.session_state.date_after),
-        'Grunnvannsnivå etter test': st.session_state.ground_water_level_after,
-        'Posisjoner temperaturmålinger etter test': str(st.session_state.depth_array_after),
-        'Temperaturmålinger etter test': str(st.session_state.temp_array_after),
-        'Strømmåler før': st.session_state.power_before,
-        'Strømmåler etter': st.session_state.power_after,
-        'Kommentar': st.session_state.comment
-    }
-    
-    with open(filename_json, "w") as outfile:
-        json.dump(dict_for_json, outfile, default=str)
-
-    # Insert the JSON document into the collection
-
-
-    key_to_check = {"Prosjektnavn": dict_for_json["Prosjektnavn"]}
-    # Check if a document with the specified key already exists
-    existing_document = collection.find_one(key_to_check)
-    # Insert the JSON document into the collection only if it doesn't already exist
-    collection.update_one(key_to_check, {"$set": dict_for_json}, upsert=True)
-
-
-    cursor = collection.find({})  # Find all documents in the collection# Iterate over the cursor to access each documentfor document in cursor:     print(document)
-    for document in cursor:
-        st.write(document)

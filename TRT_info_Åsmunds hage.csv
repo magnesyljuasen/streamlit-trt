@@ -1,20 +1,20 @@
 Prosjektnavn;Åsmunds hage
-Latitude;63.40925282386449
-Longitude;10.431942343711855
+Latitude;63.40935367376279
+Longitude;10.431953072547914
 Kontaktperson;Åsmund Fossum
 Kollektorlengde;100
-Kollektortype;Enkel-U
-Kollektorvæske;Kilfrost Geo 30 %
+Kollektortype;Dobbel-U
+Kollektorvæske;Kilfrost Geo 24 %
 Brønndiameter;115
 Foringsrørdiameter;139
 Måledato temperaturprofil før test;2024-02-01
-Grunnvannsnivå før test;2
+Grunnvannsnivå før test;4
 Posisjoner temperaturmålinger før test;[  0  10  20  30  40  50  60  70  80  90 100]
-Temperaturmålinger før test;[5 5 5 5 5 5 5 5 5 5 5]
-Måledato temperaturprofil etter test;2024-02-04
-Grunnvannsnivå etter test;2
+Temperaturmålinger før test;[4 4 4 4 4 4 4 4 4 4 4]
+Måledato temperaturprofil etter test;2024-03-03
+Grunnvannsnivå etter test;5
 Posisjoner temperaturmålinger etter test;[  0  10  20  30  40  50  60  70  80  90 100]
-Temperaturmålinger etter test;[6 6 6 6 6 6 6 6 6 6 6]
-Strømmåler før;2
-Strømmåler etter;1000
-Kommentar;Dette er Åsmunds test
+Temperaturmålinger etter test;[5 5 5 5 5 5 5 5 5 5 5]
+Strømmåler før;10
+Strømmåler etter;900
+Kommentar;Spennende!
