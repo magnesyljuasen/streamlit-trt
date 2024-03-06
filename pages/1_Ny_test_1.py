@@ -207,7 +207,8 @@ st.header('Registrering av termisk responstest')
 name, authentication_status, username, authenticator = login()
 logged_in = frontpage(name, authentication_status, username, authenticator)
 
-#streamlit_settings()
+
+
 if logged_in == True:
     new_or_load = st.selectbox('Registrer nytt prosjekt eller fortsett på eksisterende', options=['', 'Registrer nytt', 'Fortsett på eksisterende'], index=0)
 
