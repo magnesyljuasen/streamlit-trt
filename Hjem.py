@@ -20,8 +20,8 @@ def frontpage(name, authentication_status, username, authenticator):
         #-- 
         if st.button("Registrer termisk responstest"):
             switch_page("Ny_test_1")
-       # if st.button("Fortsett registrering av eksisterende termisk responstest"):
-        #    switch_page("Eksisterende_test_1")
+        if st.button("Fortsett registrering av eksisterende termisk responstest"):
+            switch_page("Eksisterende_test_1")
         if st.button("Se historiske tester"):
             switch_page("Historiske_tester")
         #if st.button("Leie testrigg?"):
