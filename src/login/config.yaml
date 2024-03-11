@@ -9,6 +9,9 @@ credentials:
     seabrokers:
       name: Seabrokers GeoEnergi
       password: $2b$12$PlY3jk2OJMwLnPcrLSXFnuEIhHoMAfoyCuDCPNNsb6PHsStpuLXT2 # To be replaced with hashed password
+    asplanviak:
+      name: Asplan Viak
+      password: $2b$12$Vgp3vjMozCfFW78o58jip.VA2aQgFaT1RM0jWSw2W8MDmS.C3evvG # To be replaced with hashed password
 cookie:
   expiry_days: 60
   key: some_signature_key

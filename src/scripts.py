@@ -20,7 +20,7 @@ def login():
     with open('src/login/config.yaml') as file:
         config = yaml.load(file, Loader=stauth.SafeLoader)
         authenticator = stauth.Authenticate(config['credentials'],config['cookie']['name'],config['cookie']['key'],config['cookie']['expiry_days'])
-        name, authentication_status, username = authenticator.login('Innlogging', 'main')
+        name, authentication_status, username = authenticator.login(fields = {'Form name' : 'Logg inn', 'Username' : 'Brukernavn', 'Password' : 'Passord', 'Login' : 'Logg inn'})
     return name, authentication_status, username, authenticator
 
 def switch_pages(previous_page_destination, previous_page_text, next_page_destination, next_page_text):

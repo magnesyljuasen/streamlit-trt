@@ -1,27 +1,22 @@
 import streamlit as st
-import streamlit_authenticator as stauth
-import yaml
-import base64
 from PIL import Image
 from streamlit_extras.switch_page_button import switch_page
-from streamlit_extras.no_default_selectbox import selectbox
-from streamlit_extras.add_vertical_space import add_vertical_space
 from src.scripts import streamlit_settings, login
 
 def frontpage(name, authentication_status, username, authenticator):
     # ugyldig passord
     if authentication_status == False:
         st.error('Ugyldig brukernavn/passord')
+        st.stop()
     # ingen input
     elif authentication_status == None:
         st.image(Image.open('src/data/img/av_logo.png'), caption = "TRT")
+        st.stop()
     # app start
     elif authentication_status:
         #-- 
         if st.button("Registrer termisk responstest"):
             switch_page("Ny_test_1")
-        if st.button("Fortsett registrering av eksisterende termisk responstest"):
-            switch_page("Eksisterende_test_1")
         if st.button("Se historiske tester"):
             switch_page("Historiske_tester")
         #if st.button("Leie testrigg?"):
@@ -38,5 +33,7 @@ def frontpage(name, authentication_status, username, authenticator):
 streamlit_settings()
 name, authentication_status, username, authenticator = login()
 frontpage(name, authentication_status, username, authenticator)
+
+st.session_state.name = name
 
 
