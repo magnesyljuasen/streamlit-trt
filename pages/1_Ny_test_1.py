@@ -25,6 +25,7 @@ def well_placement_input(text_string):
     address = address_loaded
     lat = lat_loaded
     long = long_loaded
+    lat_lon_check = False
     if text_string == "Skriv inn adresse og plasser på kart":
         c1,c2 = st.columns([2,1])
         with c1:
@@ -42,7 +43,7 @@ def well_placement_input(text_string):
                 if lat_loaded != None:
                     folium.Marker([lat_loaded, long_loaded]).add_to(m)
                 m.add_child(folium.LatLngPopup())
-                coord_json = st_folium(m, height=250, use_container_width=True, returned_objects=['last_clicked'])
+                coord_json = st_folium(m, height=400, use_container_width=True, returned_objects=['last_clicked'])
                 if coord_json['last_clicked']:
                     lat = coord_json['last_clicked']['lat']
                     long = coord_json['last_clicked']['lng']
@@ -56,6 +57,7 @@ def well_placement_input(text_string):
                         st.metric('Valgt breddegrad:', f"{round(lat, 4):,}".replace(".", ","))
                     with c2:
                         st.metric('Valgt lengdegrad:', f"{round(long, 4):,}".replace(".", ","))
+                    lat_lon_check = True
     elif text_string == "Skriv inn koordinater":
         coord_system_options = ['EU89 - Geografisk, grader (Lat/Lon)', 'EU89, UTM-sone 31', 'EU89, UTM-sone 32', 'EU89, UTM-sone 33']
         c1,c2,c3 = st.columns([0.05,1,0.05])
@@ -114,8 +116,9 @@ def well_placement_input(text_string):
             utm_tuple = utm.to_latlon(lat, long, zone, 'V')
             lat = utm_tuple[0]
             long = utm_tuple[1]
+            lat_lon_check = True
         map_with_point(lat, long)
-    return address, lat, long
+    return address, lat, long, lat_lon_check
     
 def adresse_til_koordinat(adresse,sted):
     API_KEY = "400f888f4da9461387721ccbd1a0e0db"
@@ -216,7 +219,7 @@ if selected_project_type == 'Fortsett på eksisterende prosjekt':
     cursor = collection.find({})
     for document in cursor:
         if document['Prosjektnavn'] == project_loaded:
-            #st.write(document)
+            st.write(document)                                                  ##### AKTIVER DENNE FOR Å VISE DICT I DATABASE
             project_name_loaded = document['Prosjektnavn']
             address_loaded = document['Adresse']
             lat_loaded = document['Latitude']
@@ -274,48 +277,55 @@ if selected_project_type != '':
 #################### Tabs ####################
 ##############################################
     
-    if "tab1_done" not in st.session_state:
-        st.session_state.tab1_done = False
-    if "tab2_done" not in st.session_state:
-        st.session_state.tab2_done = False
-    if "tab3_done" not in st.session_state:
-        st.session_state.tab3_done = False
-    if "tab4_done" not in st.session_state:
-        st.session_state.tab4_done = False
-    if "tab5_done" not in st.session_state:
-        st.session_state.tab5_done = False
-    if "tab6_done" not in st.session_state:
-        st.session_state.tab6_done = False
+    #if "tab1_done" not in st.session_state:
+    #    st.session_state.tab1_done = False
+    #if "tab2_done" not in st.session_state:
+    #    st.session_state.tab2_done = False
+    #if "tab3_done" not in st.session_state:
+    #    st.session_state.tab3_done = False
+    #if "tab4_done" not in st.session_state:
+    #    st.session_state.tab4_done = False
+    #if "tab5_done" not in st.session_state:
+    #    st.session_state.tab5_done = False
+    #if "tab6_done" not in st.session_state:
+    #    st.session_state.tab6_done = False
 
-    if st.session_state.tab1_done == True:
-        tab1_name = 'Om prosjektet ☑'
-    else:
-        tab1_name = 'Om prosjektet'
+    #if st.session_state.tab1_done == True:
+    #    tab1_name = 'Om prosjektet ☑'
+    #else:
+    #    tab1_name = 'Om prosjektet'
 
-    if st.session_state.tab2_done == True:
-        tab2_name = 'Brønn & kollektor ☑'
-    else:
-        tab2_name = 'Brønn & kollektor'
+    #if st.session_state.tab2_done == True:
+    #    tab2_name = 'Brønn & kollektor ☑'
+    #else:
+    #    tab2_name = 'Brønn & kollektor'
 
-    if st.session_state.tab3_done == True:
-        tab3_name = 'Temperatur **før** ☑'
-    else:
-        tab3_name = 'Temperatur **før**'
+    #if st.session_state.tab3_done == True:
+    #    tab3_name = 'Temperatur **før** ☑'
+    #else:
+    #    tab3_name = 'Temperatur **før**'
 
-    if st.session_state.tab4_done == True:
-        tab4_name = 'Temperatur **etter** ☑'
-    else:
-        tab4_name = 'Temperatur **etter**'
+    #if st.session_state.tab4_done == True:
+    #    tab4_name = 'Temperatur **etter** ☑'
+    #else:
+    #    tab4_name = 'Temperatur **etter**'
 
-    if st.session_state.tab5_done == True:
-        tab5_name = 'Strømmåler ☑'
-    else:
-        tab5_name = 'Strømmåler'
+    #if st.session_state.tab5_done == True:
+    #    tab5_name = 'Strømmåler ☑'
+    #else:
+    #    tab5_name = 'Strømmåler'
 
-    if st.session_state.tab6_done == True:
-        tab6_name = 'Kommentar ☑'
-    else:
-        tab6_name = 'Kommentar'
+    #if st.session_state.tab6_done == True:
+    #    tab6_name = 'Kommentar ☑'
+    #else:
+    #    tab6_name = 'Kommentar'
+
+    tab1_name = 'Om prosjektet'
+    tab2_name = 'Brønn & kollektor'
+    tab3_name = 'Temperatur **før**'
+    tab4_name = 'Temperatur **etter**'
+    tab5_name = 'Strømmåler'
+    tab6_name = 'Kommentar'
 
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([tab1_name, tab2_name, tab3_name, tab4_name, tab5_name, tab6_name])
     with tab1:
@@ -349,13 +359,19 @@ if selected_project_type != '':
         #    st.session_state.contact_person = ""
 
         st.subheader('Informasjon om prosjektet')
+        project_name_check = False
         project_name = st.text_input("Navn på prosjektet", value = project_name_loaded)
+        if len(project_name) > 0:
+            project_name_check = True
 
+        contact_person_check = False
         contact_person = st.text_input(f"Kontaktperson", value = str(contact_person_loaded))
+        if len(contact_person) > 0:
+            contact_person_check = True
 
-        #placement_selection = st.selectbox("Plassering av brønn", options=["Skriv inn koordinater", "Skriv inn adresse og plasser på kart"], index=1)
-        placement_selection = "Skriv inn adresse og plasser på kart"
-        [address, lat, long] = well_placement_input(placement_selection)
+        placement_selection = st.selectbox("Plassering av brønn", options=["Skriv inn adresse og plasser på kart", "Skriv inn koordinater"], index=0)
+        #placement_selection = "Skriv inn adresse og plasser på kart"
+        [address, lat, long, lat_lon_check] = well_placement_input(placement_selection)
 
 #        if len(contact_person) > 0:
 #            st.session_state.contact_person = contact_person
@@ -368,18 +384,23 @@ if selected_project_type != '':
 ############################################################
 #################### Brønn og kollektor ####################
 ############################################################
-        st.subheader('Brønn og kollektor')
-        collector_length = st.number_input("Kollektorlengde [m]", min_value = None, value = collector_length_loaded, step = 10)
-        #if collector_length > 0:
-            #if collector_length != st.session_state.collector_length:
-            #    st.session_state.df_before = pd.DataFrame()
-            #    st.session_state.depth_array_before = np.arange(0,0)
-            #    st.session_state.temp_array_before = np.arange(0,0)
-            #    st.session_state.df_after = pd.DataFrame()
-            #    st.session_state.depth_array_after = np.arange(0,0)
-            #    st.session_state.temp_array_after = np.arange(0,0)
-            #st.session_state.collector_length = collector_length 
 
+        st.subheader('Brønn og kollektor')
+        collector_length_check = False
+        collector_length = st.number_input("Kollektorlengde [m]", min_value = None, value = collector_length_loaded, step = 10)            
+            #if collector_length > 0:
+                #if collector_length != st.session_state.collector_length:
+                #    st.session_state.df_before = pd.DataFrame()
+                #    st.session_state.depth_array_before = np.arange(0,0)
+                #    st.session_state.temp_array_before = np.arange(0,0)
+                #    st.session_state.df_after = pd.DataFrame()
+                #    st.session_state.depth_array_after = np.arange(0,0)
+                #    st.session_state.temp_array_after = np.arange(0,0)
+                #st.session_state.collector_length = collector_length 
+        if collector_length > 0: 
+            collector_length_check = True
+
+        collector_type_check = False
         collector_type_list = ['',"Enkel-U", "Dobbel-U","Egendefinert"]
         if collector_type_loaded in collector_type_list: 
             collector_type_index = collector_type_list.index(collector_type_loaded)
@@ -390,7 +411,10 @@ if selected_project_type != '':
             c1,c2,c3 = st.columns([0.05,1,0.05])
             with c2:
                 collector_type = st.text_input("Skriv inn kollektortype",value = collector_type_loaded)
+        if collector_type != '':
+            collector_type_check = True
         
+        collector_fluid_check = False
         collector_fluid_list = ['', "HX24", "HX35", "Kilfrost Geo 24 %", "Kilfrost Geo 30 %", "Kilfrost Geo 35 %", "Egendefinert"]
         if collector_fluid_loaded in collector_fluid_list:
             collector_fluid_index = collector_fluid_list.index(collector_fluid_loaded)
@@ -401,7 +425,10 @@ if selected_project_type != '':
             c1,c2,c3 = st.columns([0.05,1,0.05])
             with c2:
                 collector_fluid = st.text_input("Skriv inn kollektorvæske",value=collector_fluid_loaded)
+        if collector_fluid != '':
+            collector_fluid_check = True
         
+        well_diameter_check = False
         well_diameter_list = ['', "115 mm", "Egendefinert"]
         if well_diameter_loaded == 0:
             well_diameter_index = 0
@@ -418,7 +445,10 @@ if selected_project_type != '':
             well_diameter = int(well_diameter_str.replace(' mm',''))
         else:
             well_diameter = 0
+        if well_diameter > 0:
+            well_diameter_check = True
 
+        casing_diameter_check = False
         casing_diameter_list = ['', "139 mm", "Egendefinert"]
         if casing_diameter_loaded == 0:
             casing_diameter_index = 0
@@ -435,40 +465,49 @@ if selected_project_type != '':
             casing_diameter = int(casing_diameter_str.replace(' mm',''))
         else:
             casing_diameter = 0
-        
-        if collector_type != '' and collector_fluid != '' and collector_length != 0 and well_diameter != 0 and casing_diameter != 0:
-            st.session_state.tab2_done = True
+        if casing_diameter > 0:
+            casing_diameter_check = True
 
     with tab3:
         ########## TEMPERATURPROFIL FØR #################################################################################################################################################################
         st.subheader('Temperaturprofil før test')
+        date_before_check = False
         if date_before_loaded == '':
             date_before_startvalue = date.today()
         else:
             date_before_startvalue = datetime.strptime(date_before_loaded, '%Y-%m-%d')
         date_before = st.date_input("Måledato (før test)", value = date_before_startvalue)
+        if date_before_loaded != date.today():
+            date_before_check = True
         
+        ground_water_level_before_check = False
         ground_water_level_before = st.number_input("Grunnvansnivå før test [m]", value = ground_water_level_before_loaded, step = 1)
+        if ground_water_level_before > 0:
+            ground_water_level_before_check = True
 
+        temp_array_before_check = False
         if depth_array_before_loaded == '':
             step_before_startvalue = 10
         else:
             elements = depth_array_before_loaded.replace('None', 'np.nan').strip('[]').split()
             loaded_array_before = np.array([int(elem) for elem in elements])
-            if loaded_array_before[1] is not None:
-                step_before_startvalue = int(loaded_array_before[1])
+            if loaded_array_before[-1] is not None:
+                try:
+                    step_before_startvalue = int(loaded_array_before[1])
+                except:
+                    step_before_startvalue = 10
             else:
                 step_before_startvalue = 10
         step_before = st.number_input('Oppløsning på temperaturmålinger (m)', min_value=1, step=1, value=step_before_startvalue, key='step_before_key')
         
-        if depth_array_before_loaded == '':
+        if depth_array_before_loaded == '' or depth_array_before_loaded == '[0]':
             depth_array = np.arange(0, collector_length + step_before, step_before)
             temperature_array = np.arange(0, collector_length + step_before, step_before)
             temperature_array = np.full(len(temperature_array), None)
         else:
             depth_array = loaded_array_before
 
-        if temp_array_before_loaded == '':
+        if temp_array_before_loaded == '' or temp_array_before_loaded == '[nan]':
             temperature_array = np.arange(0, collector_length + step_before, step_before)
             temperature_array = np.full(len(temperature_array), None)
         else:
@@ -491,79 +530,100 @@ if selected_project_type != '':
         depth_array_before = np.array(edited_df_before['Dybde'])
         temp_array_before = np.array(edited_df_before['Temperatur'])
 
-        temperature_plot(df = edited_df_before, before_after='før')
         #if edited_df_before["Temperatur"].count() >= 5:   #Lar deg gå videre hvis det er fylt inn minst 5 tall
         if edited_df_before["Temperatur"].isna().sum() == 0:
-            st.session_state.tab3_done = True
+            temp_array_before_check = True
+
+        temperature_plot(df = edited_df_before, before_after='før')
 
     with tab4:
         ########## TEMPERATURPROFIL ETTER #################################################################################################################################################################
+        
         st.subheader('Temperaturprofil etter test')
+        # Hvordan sjekke om denne datoen er riktig? Denne kan jo være date.today() uten at det er feil.
         if date_after_loaded == '':
             date_after_startvalue = date.today()
         else:
             date_after_startvalue = datetime.strptime(date_after_loaded, '%Y-%m-%d')
         date_after = st.date_input("Måledato (etter test)", value = date_after_startvalue)
         
+        ground_water_level_after_check = False
         ground_water_level_after = st.number_input("Grunnvansnivå etter test [m]", value = ground_water_level_after_loaded, step = 1)
+        if ground_water_level_after > 0:
+            ground_water_level_after_check = True
 
+        temp_array_after_check = False
         if depth_array_after_loaded == '':
             step_after_startvalue = 10
         else:
             elements = depth_array_after_loaded.replace('None', 'np.nan').strip('[]').split()
             loaded_array_after = np.array([int(elem) for elem in elements])
-            if loaded_array_after[1] is not None:
-                step_after_startvalue = int(loaded_array_after[1])
+            if loaded_array_after[-1] is not None:
+                try:
+                    step_after_startvalue = int(loaded_array_after[1])
+                except:
+                    step_after_startvalue = 10
             else:
                 step_after_startvalue = 10
         step_after = st.number_input('Oppløsning på temperaturmålinger (m)', min_value=1, step=1, value=step_after_startvalue, key='step_after_key')
-        
-        if depth_array_after_loaded == '':
-            depth_array = np.arange(0, collector_length + step_after, step_after)
-            temperature_array = np.arange(0, collector_length + step_after, step_after)
-            temperature_array = np.full(len(temperature_array), None)
-        else:
-            depth_array = loaded_array_after
+            
+        with st.form("k"):
+            if depth_array_after_loaded == '' or depth_array_after_loaded == '[0]':
+                depth_array = np.arange(0, collector_length + step_after, step_after)
+                temperature_array = np.arange(0, collector_length + step_after, step_after)
+                temperature_array = np.full(len(temperature_array), None)
+            else:
+                depth_array = loaded_array_after
 
-        if temp_array_after_loaded == '':
-            temperature_array = np.arange(0, collector_length + step_after, step_after)
-            temperature_array = np.full(len(temperature_array), None)
-        else:
-            elements2 = temp_array_after_loaded.replace('None', 'nan').strip('[]').split()
-            temperature_array = np.array([float(elem) for elem in elements2])
-        
-        df_after = pd.DataFrame({"Dybde" : depth_array, "Temperatur" : temperature_array})
-        
-        edited_df_after = st.data_editor(
-            df_after, 
-            hide_index = True, 
-            use_container_width=True,
-            column_config={
-                "Temperatur": st.column_config.NumberColumn("Temperatur", format="%.1f °C"),
-                "Dybde": st.column_config.NumberColumn("Dybde", format="%f m", )
-                },
-            key = "temperature_after_df"
-            )
+            if temp_array_after_loaded == '' or temp_array_after_loaded == '[nan]':
+                temperature_array = np.arange(0, collector_length + step_after, step_after)
+                temperature_array = np.full(len(temperature_array), None)
+            else:
+                elements2 = temp_array_after_loaded.replace('None', 'nan').strip('[]').split()
+                temperature_array = np.array([float(elem) for elem in elements2])
+            
+            df_after = pd.DataFrame({"Dybde" : depth_array, "Temperatur" : temperature_array})
+            
+            edited_df_after = st.data_editor(
+                df_after, 
+                hide_index = True, 
+                use_container_width=True,
+                column_config={
+                    "Temperatur": st.column_config.NumberColumn("Temperatur", format="%.1f °C"),
+                    "Dybde": st.column_config.NumberColumn("Dybde", format="%f m", )
+                    },
+                key = "temperature_after_df"
+                )
 
-        depth_array_after = np.array(edited_df_after['Dybde'])
-        temp_array_after = np.array(edited_df_after['Temperatur'])
+            depth_array_after = np.array(edited_df_after['Dybde'])
+            temp_array_after = np.array(edited_df_after['Temperatur'])
 
+            #if edited_df_after["Temperatur"].count() >= 5:   #Lar deg gå videre hvis det er fylt inn minst 5 tall
+            if edited_df_after["Temperatur"].isna().sum() == 0:
+                temp_array_after_check = True
+            c1,c2,c3 = st.columns([0.05,1,0.05])
+            with c2:
+                submitted = st.form_submit_button("Oppdater tabell")
+                if submitted:
+                    st.experimental_rerun()
+        
         temperature_plot(df = edited_df_after, before_after='etter')
-        #if edited_df_after["Temperatur"].count() >= 5:   #Lar deg gå videre hvis det er fylt inn minst 5 tall
-        if edited_df_after["Temperatur"].isna().sum() == 0:
-            st.session_state.tab4_done = True
 
     with tab5:
         ########## STRØMMÅLER #################################################################################################################################################################
         st.subheader('Strømmåler før og etter test')
+        
+        power_before_check = False
         power_before = st.number_input("Strømmåler før", value = power_before_loaded)
+        if power_before > 0:
+            power_before_check = True
         #power_before_file = st.file_uploader("Last gjerne opp bilde av strømmåler før test")
 
+        power_after_check = False
         power_after = st.number_input("Strømmåler etter", value = power_after_loaded)
+        if power_after > 0:
+            power_after_check = True
         #power_after_file = st.file_uploader("Last gjerne opp bilde av strømmåler etter test")
-        
-        if power_before >0 and power_after > 0:
-            st.session_state.tab5_done = True
 
     with tab6:    
         ########## KOMMENTARER #################################################################################################################################################################
@@ -571,7 +631,8 @@ if selected_project_type != '':
         comment = st.text_area("Eventuelle kommentarer", value=comment_loaded)
         #uploaded_files = st.file_uploader("Last opp eventuelle vedlegg (bilder, testdata, andre filer)", accept_multiple_files=True)
         if len(comment) > 0:
-            st.session_state.tab6_done = True
+            #st.session_state.tab6_done = True
+            tab6_done = True
 
     #st.markdown('---')
     #make_file_button = st.button('Lag fil/Fullfør/(...)')
@@ -621,6 +682,28 @@ if selected_project_type != '':
         if st.button("Gå tilbake til forside"):
             switch_page('Hjem')
     with c2:
-        if st.button('Send inn skjema'):
-            st.experimental_rerun()
+        submit_button = st.button('Send inn skjema')
+        
+    checks = [project_name_check, contact_person_check, lat_lon_check, collector_length_check, collector_type_check, collector_fluid_check, well_diameter_check, casing_diameter_check, date_before_check,
+              ground_water_level_before_check, temp_array_before_check, ground_water_level_after_check, temp_array_after_check, power_before_check, power_after_check]
+    checked_inputs_names = ['Navn på prosjektet', 'Kontaktperson', 'Plassering av brønn', 'Kollektorlengde', 'Kollektortype', 'Kollektorvæske', 'Diameter borehull', 'Diameter foringsrør', 
+                            'Måledato før test', 'Grunnvansnivå før test', 'Temperaturmålinger før test', 'Grunnvannsnivå etter test', 'Temperaturmålinger etter test', 'Strømmåler før test',
+                            'Strømmåler etter test']
+    missing_inputs = []
+    
+    if submit_button:
+        for i in range(0,len(checks)):
+            if checks[i] == False:
+                missing_inputs.append(checked_inputs_names[i])
 
+        if len(missing_inputs) > 0:
+
+            
+            missing_inputs_str = '''  \n  '''.join(missing_inputs)
+            st.warning(f"""
+            Følgende felter må fylles ut:   
+            - {missing_inputs_str}   
+            """)
+        else:
+            st.success('Innsending vellykket')
+        #st.experimental_rerun()

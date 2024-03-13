@@ -1,0 +1,24 @@
+Hvordan lage Docker av Streamlit-side:
+
+1. Last ned Docker Desktop og gjør alt det den ber om.
+
+2. Lim in en Docker-fil i samme mappe. Den skal se slik ut:
+	FROM python:3.9-slim
+	WORKDIR /app
+	RUN apt-get update && apt-get install -y \
+    	build-essential \
+    	curl \
+    	software-properties-common \
+    	git \
+    	&& rm -rf /var/lib/apt/lists/*
+	COPY . .
+	RUN pip3 install -r requirements.txt
+	EXPOSE 8501
+	HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
+	ENTRYPOINT ["streamlit", "run", "Hjem.py", "--server.port=8501", "--server.address=0.0.0.0"]
+
+3. Endre tredje element i nederste liste til filnavnet på .py-filen som inneholder streamlit-siden. Kan også være nødvendig å endre andre parametre, slik som versjonen av Python.
+
+4. Kjør "docker build -t mappenavn ." hvor mappenavn er navnet på mappen filene er lagret i og navnet som gis til docker-en
+
+5. Kjør "docker run -p 8501:8501 streamlit" for å se siden. Nettsiden vil ikke åpnes automatisk, og heller ikke være tilgjengelig på "http://0.0.0.0:8501". Skriv heller "http://localhost:8501" i nettleseren, og den skal vises. Docker-en skal også være synlig i Docker Desktop-programmet
