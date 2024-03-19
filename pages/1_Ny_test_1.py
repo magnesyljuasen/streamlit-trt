@@ -35,7 +35,7 @@ def well_placement_input(text_string):
         if len(address)>2:
             [lat_search,long_search] = adresse_til_koordinat(address,place)
             if lat_search != lat_search or long_search != long_search:
-                st.info('Adresse ikke funnet, prøv en annen skrivemåte, eller velg å skrive inn koordinater.')
+                st.error('Finner ikke adresse! Prøv en annen skrivemåte.')
             else:
                 #map_with_point(lat,long)
                 st.info('Klikk på kartet for å velge plassering av brønnen:')
@@ -165,6 +165,7 @@ def map_with_point(lat,long):
     st_folium(m,height=400,width=725)
 
 def temperature_plot(df, before_after, ground_water_line):
+    df = df.sort_values(by='Dybde')
     st.write(f'**Temperatur i brønn {before_after} test**')
     min_x = np.min(df['Temperatur'])-0.5
     max_x = np.max(df['Temperatur'])+0.5
@@ -181,6 +182,7 @@ def send_to_database():
     filename_json = f"TRT_info_{project_name}.json"
     dict_for_json = {
         'Prosjektnavn': project_name,
+        'Firma' : access_token,
         'Adresse': address,
         'Latitude': lat,
         'Longitude': long,
@@ -221,13 +223,14 @@ def send_to_database():
 
 streamlit_settings()
 st.header('Registrering av termisk responstest')
-#st.write(st.session_state.name)
+access_token = st.session_state.get('name')
+if access_token == None:
+    st.switch_page('Hjem.py')
 
 selected_project_type = st.radio("Valg", options=["Fortsett på eksisterende prosjekt", "Registrer nytt prosjekt"], label_visibility='collapsed')
 
 if selected_project_type == 'Registrer nytt prosjekt': 
     project_loaded = None
-
     project_name_loaded = ''
     address_loaded = ''
     lat_loaded = 0.0
@@ -357,6 +360,8 @@ if selected_project_type == 'Registrer nytt prosjekt' or project_loaded != None:
     project_name = st.text_input("Navn på prosjektet", value = project_name_loaded)
     if len(project_name) > 0:
         project_name_check = True
+    else:
+        st.stop()
 
     contact_person_check = False
     contact_person = st.text_input(f"Kontaktperson", value = str(contact_person_loaded))
@@ -497,7 +502,7 @@ if selected_project_type == 'Registrer nytt prosjekt' or project_loaded != None:
 
     with st.form("j"):
         st.write('Temperaturmålinger **før** test [°C]')
-        st.info('Trykk på det grønne feltet for å legge til ny rad. Vi anbefaler at temperaturen måles for minimum hver tiende meter.')
+        st.write('Trykk på det grønne feltet for å legge til ny rad. Vi anbefaler at temperaturen måles for minimum hver tiende meter.')
         df_before = pd.DataFrame({"Dybde" : depth_array, "Temperatur" : temperature_array})
         
         edited_df_before = st.data_editor(
@@ -517,7 +522,7 @@ if selected_project_type == 'Registrer nytt prosjekt' or project_loaded != None:
         
         c1,c2,c3 = st.columns([0.05,1,0.05])
         with c2:
-            submitted = st.form_submit_button("Oppdater tabell og plot")
+            submitted = st.form_submit_button("Oppdater tabell og figur")
             if submitted:
                 st.rerun()
 
@@ -527,7 +532,6 @@ if selected_project_type == 'Registrer nytt prosjekt' or project_loaded != None:
             for i in range(0,len(edited_df_before)):
                 if edited_df_before['Dybde'].iloc[i] > collector_length:
                     st.error(f'Temperaturmålinger kan ikke være dypere enn kollektorlengden ({collector_length} m)')
-                    st.stop()
 
     temperature_plot(df = edited_df_before, before_after='før', ground_water_line=ground_water_level_before)
 
@@ -574,7 +578,7 @@ if selected_project_type == 'Registrer nytt prosjekt' or project_loaded != None:
 
     with st.form("k"):
         st.write('Temperaturmålinger **etter** test [°C]')
-        st.info('Trykk på det grønne feltet for å legge til ny rad. Vi anbefaler at temperaturen måles for minimum hver tiende meter.')
+        st.write('Trykk på det grønne feltet for å legge til ny rad. Vi anbefaler at temperaturen måles for minimum hver tiende meter.')
         df_after = pd.DataFrame({"Dybde" : depth_array, "Temperatur" : temperature_array})
         
         edited_df_after = st.data_editor(
@@ -594,7 +598,7 @@ if selected_project_type == 'Registrer nytt prosjekt' or project_loaded != None:
         
         c1,c2,c3 = st.columns([0.05,1,0.05])
         with c2:
-            submitted = st.form_submit_button("Oppdater tabell og plot")
+            submitted = st.form_submit_button("Oppdater tabell og figur")
             if submitted:
                 st.rerun()
 
@@ -604,7 +608,6 @@ if selected_project_type == 'Registrer nytt prosjekt' or project_loaded != None:
             for i in range(0,len(edited_df_after)):
                 if edited_df_after['Dybde'].iloc[i] > collector_length:
                     st.error(f'Temperaturmålinger kan ikke være dypere enn kollektorlengden ({collector_length} m)')
-                    st.stop()
     
     temperature_plot(df = edited_df_after, before_after='etter', ground_water_line=ground_water_level_after)
 
@@ -628,7 +631,6 @@ if selected_project_type == 'Registrer nytt prosjekt' or project_loaded != None:
     if power_before and power_after:
         if power_before >= power_after:
             st.error('"Strømmåler etter" må være større enn "Strømmåler før".')
-            st.stop()
 
     st.markdown('---')
 

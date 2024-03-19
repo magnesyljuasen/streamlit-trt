@@ -109,8 +109,9 @@ class Map:
         self.m = m
     
     def show_map(self):
-        self.m.to_streamlit(570, 600)
-        
+        returned_objects = st_folium(self.m, use_container_width=True)
+        return returned_objects
+    
     def _add_wms_layer(self, map, url, layer, layer_name, display):
         map.add_wms_layer(
             url, 
@@ -137,13 +138,19 @@ class Map:
         tooltip=folium.GeoJsonTooltip(fields= ["ID", "BRA"],aliases=["ID: ", f"BTA (m{uc}): "],labels=True))
         self.m.add_child(feature)
 
-st.title("Historiske tester")        
+access_token = st.session_state.get('name')
+if access_token == None:
+    st.switch_page('Hjem.py')
+st.write(access_token)
+st.title("Tidligere tester")        
 map_obj = Map()
 map_obj.lat = 60
 map_obj.long = 11
 map_obj.name = "Test"
 map_obj.create_wms_map()
-map_obj.show_map()
+returned_objects = map_obj.show_map()
+
+st.write(returned_objects)
 
 st.markdown("---")
 #add_vertical_space(5)
