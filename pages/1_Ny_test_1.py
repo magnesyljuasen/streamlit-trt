@@ -336,23 +336,23 @@ if selected_project_type == 'Registrer nytt prosjekt' or project_loaded != None:
 ###################################################################
 #################### Informasjon om prosjektet ####################
 ###################################################################
-    if 'coord_system_index' not in st.session_state:
-        st.session_state.coord_system_index = 0
-    if 'lat_31' not in st.session_state:
-        st.session_state.lat_31 = 0.0
-    if 'long_31' not in st.session_state:
-        st.session_state.long_31 = 0.0
-    if 'lat_32' not in st.session_state:
-        st.session_state.lat_32 = 0.0
-    if 'long_32' not in st.session_state:
-        st.session_state.long_32 = 0.0
-    if 'lat_33' not in st.session_state:
-        st.session_state.lat_33 = 0.0
-    if 'long_33' not in st.session_state:
-        st.session_state.long_33 = 0.0
+    #if 'coord_system_index' not in st.session_state:
+    #    st.session_state.coord_system_index = 0
+    #if 'lat_31' not in st.session_state:
+    #    st.session_state.lat_31 = 0.0
+    #if 'long_31' not in st.session_state:
+    #    st.session_state.long_31 = 0.0
+    #if 'lat_32' not in st.session_state:
+    #    st.session_state.lat_32 = 0.0
+    #if 'long_32' not in st.session_state:
+    #    st.session_state.long_32 = 0.0
+    #if 'lat_33' not in st.session_state:
+    #    st.session_state.lat_33 = 0.0
+    #if 'long_33' not in st.session_state:
+    #    st.session_state.long_33 = 0.0
     
-    if 'changed_coords' not in st.session_state:
-        st.session_state.changed_coords = 0
+    #if 'changed_coords' not in st.session_state:
+    #    st.session_state.changed_coords = 0
 
     st.markdown('---')
     st.subheader('Informasjon om prosjektet')

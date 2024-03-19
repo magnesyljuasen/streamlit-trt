@@ -12,6 +12,8 @@ from folium import plugins
 from streamlit_folium import st_folium
 import leafmap.foliumap as leafmap
 import geopandas
+import pymongo
+import pandas as pd
 
 st.set_page_config(page_title="TRT", layout="centered", page_icon="src/data/img/AsplanViak_Favicon_32x32.png", initial_sidebar_state="collapsed")
 
@@ -142,7 +144,71 @@ access_token = st.session_state.get('name')
 if access_token == None:
     st.switch_page('Hjem.py')
 st.write(access_token)
-st.title("Tidligere tester")        
+st.title("Tidligere tester")
+
+# Åsmunds rot ##################################################################################################
+client = pymongo.MongoClient("mongodb+srv://magnesyljuasen:jau0IMk5OKJWJ3Xl@cluster0.dlyj4y2.mongodb.net/")
+db = client["TRT"]
+collection = db["TRT"]
+cursor = collection.find({})
+
+project_name_list = []
+address_list = []
+lat_list = []
+long_list = []
+contact_person_list = []
+collector_length_list = []
+collector_type_list = []
+collector_fluid_list = []
+well_diameter_list = []
+casing_diameter_list = []
+date_before_list = []
+ground_water_level_before_list = []
+depth_array_before_list = []
+temp_array_before_list = []
+date_after_list = []
+ground_water_level_after_list = []
+depth_array_after_list = []
+temp_array_after_list = []
+power_before_list = []
+power_after_list = []
+comment_list = []
+
+for document in cursor:
+    #if document['Firma'] == access_token:                  ##### For at denne ikke skal gi feilmelding, må du slette alle prosjektene i databasen som mangler 'Firma'-nøkkelen ;-)
+    if 'hage' in document['Prosjektnavn']:                  ### Midlertidig test
+        #st.write(document['Prosjektnavn'])
+        project_name_list.append(document['Prosjektnavn'])
+        #address_list.append(document['Adresse'])               ##### For at denne ikke skal gi feilmelding, må du slette alle prosjektene i databasen som mangler 'Adresse'-nøkkelen ;-)
+        lat_list.append(document['Latitude'])
+        long_list.append(document['Longitude'])
+        contact_person_list.append(document['Kontaktperson'])
+        collector_length_list.append(document['Kollektorlengde'])
+        collector_type_list.append(document['Kollektortype'])
+        collector_fluid_list.append(document['Kollektorvæske'])
+        well_diameter_list.append(document['Brønndiameter'])
+        casing_diameter_list.append(document['Foringsrørdiameter'])
+        date_before_list.append(document['Måledato temperaturprofil før test'])
+        ground_water_level_before_list.append(document['Grunnvannsnivå før test'])
+        depth_array_before_list.append(document['Posisjoner temperaturmålinger før test'])
+        temp_array_before_list.append(document['Temperaturmålinger før test'])
+        date_after_list.append(document['Måledato temperaturprofil etter test'])
+        ground_water_level_after_list.append(document['Grunnvannsnivå etter test'])
+        depth_array_after_list.append(document['Posisjoner temperaturmålinger etter test'])
+        temp_array_after_list.append(document['Temperaturmålinger etter test'])
+        power_before_list.append(document['Strømmåler før'])
+        power_after_list.append(document['Strømmåler etter'])
+        comment_list.append(document['Kommentar'])
+        
+dict_for_df = {'Prosjektnavn': project_name_list, 
+               'Breddegrad': lat_list, 
+               'Lengdegrad': long_list} 
+                # osv ...
+    
+df = pd.DataFrame(dict_for_df)
+st.write(df)
+##################################################################################################
+
 map_obj = Map()
 map_obj.lat = 60
 map_obj.long = 11
