@@ -165,18 +165,19 @@ def map_with_point(lat,long):
     st_folium(m,height=400,width=725)
 
 def temperature_plot(df, before_after, ground_water_line):
-    df = df.sort_values(by='Dybde')
-    st.write(f'**Temperatur i brønn {before_after} test**')
-    min_x = np.min(df['Temperatur'])-0.5
-    max_x = np.max(df['Temperatur'])+0.5
-    fig = px.line(y=df["Dybde"], x=df["Temperatur"], color_discrete_sequence=['#367A2F', '#FFC358'])
-    fig.update_xaxes(title_text='Temperatur [°C]', side='top')
-    fig.update_yaxes(title_text='Dybde [m]', autorange='reversed')
-    fig.update_xaxes(range=[min_x, max_x])
-    if ground_water_line != None:
-        fig.add_shape(type='line', x0=min_x, y0=ground_water_line, x1=max_x, y1=ground_water_line, line=dict(color='#007FFF', width=2))
-        fig.add_annotation(x=min_x+0.08*(max_x-min_x), y=ground_water_line+0.05*df['Dybde'].iloc[-1], text="Grunnvannsnivå", showarrow=False, font=dict(color="#007FFF", size=14))
-    st.plotly_chart(fig, config={'staticPlot': True}, use_container_width=True)
+    if len(df) > 1:
+        df = df.sort_values(by='Dybde')
+        st.write(f'**Temperatur i brønn {before_after} test**')
+        min_x = np.min(df['Temperatur'])-0.5
+        max_x = np.max(df['Temperatur'])+0.5
+        fig = px.line(y=df["Dybde"], x=df["Temperatur"], color_discrete_sequence=['#367A2F', '#FFC358'])
+        fig.update_xaxes(title_text='Temperatur [°C]', side='top')
+        fig.update_yaxes(title_text='Dybde [m]', autorange='reversed')
+        fig.update_xaxes(range=[min_x, max_x])
+        if ground_water_line != None:
+            fig.add_shape(type='line', x0=min_x, y0=ground_water_line, x1=max_x, y1=ground_water_line, line=dict(color='#007FFF', width=2))
+            fig.add_annotation(x=min_x+0.08*(max_x-min_x), y=ground_water_line+0.05*df['Dybde'].iloc[-1], text="Grunnvannsnivå", showarrow=False, font=dict(color="#007FFF", size=14))
+        st.plotly_chart(fig, config={'staticPlot': True}, use_container_width=True)
 
 def send_to_database():
     filename_json = f"TRT_info_{project_name}.json"
@@ -202,7 +203,11 @@ def send_to_database():
         'Temperaturmålinger etter test': str(temp_array_after),
         'Strømmåler før': power_before,
         'Strømmåler etter': power_after,
-        'Kommentar': comment
+        'Kommentar': comment,
+        'Oppdragsnummer': project_id,
+        'Effektiv ledningsevne': conductivity,
+        'Termisk borehullsmotstand': resistance,
+        'Berggrunnstype': rock_type
     }
 
     with open(filename_json, "w") as outfile:
@@ -252,6 +257,10 @@ if selected_project_type == 'Registrer nytt prosjekt':
     power_before_loaded = None
     power_after_loaded = None
     comment_loaded = ''
+    project_id_loaded = None
+    conductivity_loaded = None
+    resistance_loaded = None
+    rock_type_loaded = None
 
 client = pymongo.MongoClient("mongodb+srv://magnesyljuasen:jau0IMk5OKJWJ3Xl@cluster0.dlyj4y2.mongodb.net/")
 db = client["TRT"]
@@ -268,32 +277,34 @@ if selected_project_type == 'Fortsett på eksisterende prosjekt' and project_loa
     client = pymongo.MongoClient("mongodb+srv://magnesyljuasen:jau0IMk5OKJWJ3Xl@cluster0.dlyj4y2.mongodb.net/")
     db = client["TRT"]
     collection = db["TRT"]
-    cursor = collection.find({})
+    cursor = collection.find({'Prosjektnavn': project_loaded})
     for document in cursor:
-        if document['Prosjektnavn'] == project_loaded:
-            #st.write(document)                                                  ##### AKTIVER DENNE FOR Å VISE DICT I DATABASE
-            project_name_loaded = document['Prosjektnavn']
-            address_loaded = document['Adresse']
-            lat_loaded = document['Latitude']
-            long_loaded = document['Longitude']
-            contact_person_loaded = document['Kontaktperson']
-            collector_length_loaded = document['Kollektorlengde']
-            collector_type_loaded = document['Kollektortype']
-            collector_fluid_loaded = document['Kollektorvæske']
-            well_diameter_loaded = document['Brønndiameter']
-            casing_diameter_loaded = document['Foringsrørdiameter']
-            date_before_loaded = document['Måledato temperaturprofil før test']
-            ground_water_level_before_loaded = document['Grunnvannsnivå før test']
-            depth_array_before_loaded = document['Posisjoner temperaturmålinger før test']
-            temp_array_before_loaded = document['Temperaturmålinger før test']
-            date_after_loaded = document['Måledato temperaturprofil etter test']
-            ground_water_level_after_loaded = document['Grunnvannsnivå etter test']
-            depth_array_after_loaded = document['Posisjoner temperaturmålinger etter test']
-            temp_array_after_loaded = document['Temperaturmålinger etter test']
-            power_before_loaded = document['Strømmåler før']
-            power_after_loaded = document['Strømmåler etter']
-            comment_loaded = document['Kommentar']
-            break
+        #st.write(document)                                                  ##### AKTIVER DENNE FOR Å VISE DICT I DATABASE
+        project_name_loaded = document['Prosjektnavn']
+        address_loaded = document['Adresse']
+        lat_loaded = document['Latitude']
+        long_loaded = document['Longitude']
+        contact_person_loaded = document['Kontaktperson']
+        collector_length_loaded = document['Kollektorlengde']
+        collector_type_loaded = document['Kollektortype']
+        collector_fluid_loaded = document['Kollektorvæske']
+        well_diameter_loaded = document['Brønndiameter']
+        casing_diameter_loaded = document['Foringsrørdiameter']
+        date_before_loaded = document['Måledato temperaturprofil før test']
+        ground_water_level_before_loaded = document['Grunnvannsnivå før test']
+        depth_array_before_loaded = document['Posisjoner temperaturmålinger før test']
+        temp_array_before_loaded = document['Temperaturmålinger før test']
+        date_after_loaded = document['Måledato temperaturprofil etter test']
+        ground_water_level_after_loaded = document['Grunnvannsnivå etter test']
+        depth_array_after_loaded = document['Posisjoner temperaturmålinger etter test']
+        temp_array_after_loaded = document['Temperaturmålinger etter test']
+        power_before_loaded = document['Strømmåler før']
+        power_after_loaded = document['Strømmåler etter']
+        comment_loaded = document['Kommentar']
+        project_id_loaded = document['Oppdragsnummer']
+        conductivity_loaded = document['Effektiv ledningsevne']
+        resistance_loaded = document['Termisk borehullsmotstand']
+        rock_type_loaded = document['Berggrunnstype']
 
 if selected_project_type == 'Registrer nytt prosjekt' or project_loaded != None:
 ####################################################
@@ -336,23 +347,23 @@ if selected_project_type == 'Registrer nytt prosjekt' or project_loaded != None:
 ###################################################################
 #################### Informasjon om prosjektet ####################
 ###################################################################
-    if 'coord_system_index' not in st.session_state:
-        st.session_state.coord_system_index = 0
-    if 'lat_31' not in st.session_state:
-        st.session_state.lat_31 = 0.0
-    if 'long_31' not in st.session_state:
-        st.session_state.long_31 = 0.0
-    if 'lat_32' not in st.session_state:
-        st.session_state.lat_32 = 0.0
-    if 'long_32' not in st.session_state:
-        st.session_state.long_32 = 0.0
-    if 'lat_33' not in st.session_state:
-        st.session_state.lat_33 = 0.0
-    if 'long_33' not in st.session_state:
-        st.session_state.long_33 = 0.0
+    #if 'coord_system_index' not in st.session_state:
+    #    st.session_state.coord_system_index = 0
+    #if 'lat_31' not in st.session_state:
+    #    st.session_state.lat_31 = 0.0
+    #if 'long_31' not in st.session_state:
+    #    st.session_state.long_31 = 0.0
+    #if 'lat_32' not in st.session_state:
+    #    st.session_state.lat_32 = 0.0
+    #if 'long_32' not in st.session_state:
+    #    st.session_state.long_32 = 0.0
+    #if 'lat_33' not in st.session_state:
+    #    st.session_state.lat_33 = 0.0
+    #if 'long_33' not in st.session_state:
+    #    st.session_state.long_33 = 0.0
     
-    if 'changed_coords' not in st.session_state:
-        st.session_state.changed_coords = 0
+    #if 'changed_coords' not in st.session_state:
+    #    st.session_state.changed_coords = 0
 
     st.markdown('---')
     st.subheader('Informasjon om prosjektet')
@@ -479,8 +490,10 @@ if selected_project_type == 'Registrer nytt prosjekt' or project_loaded != None:
         ground_water_level_before_check = True
 
     temp_array_before_check = False
+
+    st.write(depth_array_before_loaded)
     
-    if depth_array_before_loaded == '' or depth_array_before_loaded == '[0]':
+    if depth_array_before_loaded == '' or depth_array_before_loaded == '[nan]' or depth_array_before_loaded == '[None]':
         # Make new
         depth_array = np.arange(0, 1, 1)
         depth_array = np.full(len(depth_array), float('nan'))
@@ -556,7 +569,7 @@ if selected_project_type == 'Registrer nytt prosjekt' or project_loaded != None:
 
     temp_array_after_check = False
     
-    if depth_array_after_loaded == '' or depth_array_after_loaded == '[0]':
+    if depth_array_after_loaded == '' or depth_array_after_loaded == '[nan]' or depth_array_before_loaded == '[None]':
         # Make new
         depth_array = np.arange(0, 1, 1)
         depth_array = np.full(len(depth_array), float('nan'))
@@ -640,6 +653,22 @@ if selected_project_type == 'Registrer nytt prosjekt' or project_loaded != None:
     #uploaded_files = st.file_uploader("Last opp eventuelle vedlegg (bilder, testdata, andre filer)", accept_multiple_files=True)
     if len(comment) > 0:
         tab6_done = True
+
+    st.markdown('---')
+
+    ########## RESULTATER FRA ANALYSE (KUN INNLOGGET SOM ASPLAN VIAK) ###############################################################################################################################
+    if access_token == 'Asplan Viak':
+        st.subheader('Detaljer og resultater fra Asplan Viak')
+        project_id = st.number_input('Oppdragsnummer', value=project_id_loaded)
+        conductivity = st.number_input('Effektiv varmeledningsevne (W/mK)', value=conductivity_loaded)
+        resistance = st.number_input('Termisk borehullsmotstand (mK/W)', value=resistance_loaded)
+        rock_type = st.text_input('Berggrunnstype', value=rock_type_loaded)
+    else:
+        project_id = None
+        conductivity = None
+        resistance = None
+        rock_type = None
+
 
     st.markdown('---')
 
