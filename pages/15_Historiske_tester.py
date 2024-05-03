@@ -146,7 +146,6 @@ class Map:
 access_token = st.session_state.get('name')
 if access_token == None:
     st.switch_page('Hjem.py')
-st.write(access_token)
 st.title("Tidligere tester")
 
 # Åsmunds rot ##################################################################################################

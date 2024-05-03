@@ -1,17 +1,20 @@
 credentials:
   usernames:
-    baasum:
-      name: Baasum Boring
-      password: $2b$12$GL.80WXXxMDbGG4UVkq7xON9HzG88QgOR9W90iMzsUbsvoUInWXO6 # To be replaced with hashed password
-    vestnorsk:
-      name: Vestnorsk Brunnboring
-      password: $2b$12$3Gd92iuoGrn84a/2aC7M8.1deRUXONLhtDNU3mhxyXpb0vGEn0wBy # To be replaced with hashed password
-    seabrokers:
-      name: Seabrokers GeoEnergi
-      password: $2b$12$PlY3jk2OJMwLnPcrLSXFnuEIhHoMAfoyCuDCPNNsb6PHsStpuLXT2 # To be replaced with hashed password
     asplanviak:
       name: Asplan Viak
-      password: $2b$12$Vgp3vjMozCfFW78o58jip.VA2aQgFaT1RM0jWSw2W8MDmS.C3evvG # To be replaced with hashed password
+      password: $2b$12$mpdVk9HnrI6k4dDfp3dNU.eYOkeoJow3BFv62xk6.V266bNMaBUGa # To be replaced with hashed password
+    baasum:
+      name: Baasum Boring
+      password: $2b$12$bkP4hPoVER4SFUsXAIiD..IJEFUc2V8Sxsrh4E4ghNlHItqBBuKvi # To be replaced with hashed password
+    seabrokers:
+      name: Seabrokers GeoEnergi
+      password: $2b$12$iAw.KWQBA/CZ7HLFPtg5S.TQN440CRujcLMGNiBqn8Vo5q29nuita # To be replaced with hashed password
+    nordenfjelske:
+      name: Nordenfjelske
+      password: $2b$12$obERiYwNFk6ueAZddVMOOe/UgrkH1Sz21teTKhTc2TpcIICW8xUbq
+    vestnorsk:
+      name: Vestnorsk Brunnboring
+      password: $2b$12$5diHLLJF/XhDerjtH5IlWOI9ofT1whxH5D2aEuk5DC4/SnK95LpIG # To be replaced with hashed password
 cookie:
   expiry_days: 60
   key: some_signature_key

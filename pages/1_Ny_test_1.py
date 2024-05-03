@@ -210,8 +210,8 @@ def send_to_database():
         'Berggrunnstype': rock_type
     }
 
-    with open(filename_json, "w") as outfile:
-        json.dump(dict_for_json, outfile, default=str)
+#    with open(filename_json, "w") as outfile:
+#        json.dump(dict_for_json, outfile, default=str)
 
     # Insert the JSON document into the collection
     key_to_check = {"Prosjektnavn": dict_for_json["Prosjektnavn"]}
@@ -401,7 +401,7 @@ if selected_project_type == 'Registrer nytt prosjekt' or project_loaded != None:
         collector_length_check = True
 
     collector_type_check = False
-    collector_type_list = ['',"Enkel-U", "Dobbel-U","Egendefinert"]
+    collector_type_list = ['',"Enkel-U 40 mm", "Enkel-U 45 mm", "Enkel-U 50 mm", "Dobbel-U 32 mm","Egendefinert"]
     if collector_type_loaded in collector_type_list: 
         collector_type_index = collector_type_list.index(collector_type_loaded)
     else:
